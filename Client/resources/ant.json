@@ -1,0 +1,13 @@
+{
+	"filename": "ant.png",
+	"width": 32,
+	"height": 32,
+	"animations": [ 
+		{
+			"id": "Walk",
+			"x": 0,
+			"y": 0,
+			"durations": [ 100, 100, 50, 50, 100, 100, 50, 50]
+		}
+	]
+}

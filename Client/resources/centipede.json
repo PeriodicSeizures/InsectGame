@@ -1,0 +1,13 @@
+{
+	"filename": "centipede.png",
+	"width": 32,
+	"height": 32,
+	"animations": [ 
+		{
+			"id": "Walk",
+			"x": 0,
+			"y": 0,
+			"durations": [ 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100]
+		}
+	]
+}

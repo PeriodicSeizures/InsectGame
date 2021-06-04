@@ -1,0 +1,13 @@
+{
+	"filename": "brick.png",
+	"width": 16,
+	"height": 16,
+	"animations": [ 
+		{
+			"id": "Empty",
+			"x": 0,
+			"y": 0,
+			"durations": [ 100 ]
+		}
+	]
+}
