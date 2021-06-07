@@ -28,81 +28,21 @@ void TCPServer::start() {
 	);
 }
 
-void TCPServer::tick() {
-	for (auto it = connections.cbegin(); it != connections.cend(); ) {
-		//for (auto&& entry : server.connections) {
-
-			/*
-			* it is safe to remove every packet, except for the newest one
-			* the newest packet might be unfinished
-			*/
-		if (!it->second || !it->second->is_connected()) {
-			it = connections.erase(it);
-			continue;
-		}
-
-		auto conn = it->second;
-
-		while (it->second->in_packets.count() > 1) {
-			auto e = it->second->in_packets.pop_front();
-			uint16_t len = 0;
-			Packet::ErrorCode ec = Packet::S(e.type, len);
-
-			//if (ec == Packet::ErrorCode::OK) {
-
-
-
-			switch (e.type) {
-			case Packet::Type::SRC_CLIENT_TRUSTED_MOTION: {
-				// actually forward to all except the sender
-				this->forward_except(e, conn->uuid);
-				break;
-			}
-			case Packet::Type::CHAT32: {
-				// instead of copying the contents of the packet data
-				// into the real packet, reinterpret as that type, explicitly
-				Packet::Chat32 *chat = static_cast<Packet::Chat32*>((void*)e.data);
-
-				if (chat->target[0] == '\0') {
-					// message all clients
-					//conn->out_packets.push_back()
-				}
-				else {
-					// message a particular client
-				}
-				std::cout << "chat32: " << chat->message << "\n";
-				break;
-			} case Packet::Type::CHAT64: {
-
-			}
-
-			}
-			//entry.second->in_packets.p
-
-		}
-		++it;
-	}
-}
-
-//inline void __forward(std::shared_ptr<TCPConnection> conn, Packet packet) {
-//	conn->forward(packet);
-//}
-
 void TCPServer::forward(Packet packet) {
 	for (auto&& conn : connections) {
-		conn.second->forward(std::move(packet));
+		conn.second.first->forward(std::move(packet));
 	}
 }
 
 void TCPServer::forward(Packet packet, UUID uuid) {
-	connections[uuid]->forward(std::move(packet));
+	connections[uuid].first->forward(std::move(packet));
 }
 
 void TCPServer::forward_except(Packet packet, UUID uuid) {
 	for (auto&& conn : connections) {
 		if (conn.first != uuid) {
 			//conn.second->out_packets.push_back(std::move(packet));
-			conn.second->forward(std::move(packet));
+			conn.second.first->forward(std::move(packet));
 		}
 	}
 }
@@ -137,7 +77,10 @@ void TCPServer::do_accept()
 				std::cout << "client " << uuid << " has connected from: " << 
 					addr << ", port: " << port << "\n";
 
-				connections.insert({ uuid, conn });
+				connections.insert({ uuid, 
+					{conn, {Entity::Type::NONE, uuid} } 
+					});
+
 				conn->start();
 			}
 			catch (const std::system_error& ec) {

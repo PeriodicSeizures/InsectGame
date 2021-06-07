@@ -27,7 +27,7 @@ private:
 public:
 	AsyncQueue<Packet> in_packets;
 
-	UUID uuid;
+	//UUID uuid;
 	//asio::steady_timer deadline;
 
 	//asio::steady_timer timer_latency;
@@ -37,7 +37,7 @@ public:
 
 public:
 	TCPConnection(asio::io_context& _io_context);
-	TCPConnection(tcp::socket socket, UUID uuid);
+	TCPConnection(tcp::socket socket);
 	~TCPConnection();
 
 	tcp::socket& socket();

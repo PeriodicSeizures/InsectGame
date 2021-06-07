@@ -10,8 +10,8 @@ TCPConnection::TCPConnection(asio::io_context& _io_context)
 	: _socket(_io_context) {}
 
 // used by server
-TCPConnection::TCPConnection(tcp::socket socket, UUID uuid)
-	: _socket(std::move(socket)), uuid(uuid) {}
+TCPConnection::TCPConnection(tcp::socket socket)
+	: _socket(std::move(socket)) {}
 
 TCPConnection::~TCPConnection() {
 	std::cout << "deconstructor()\n";

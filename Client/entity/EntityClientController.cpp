@@ -86,11 +86,12 @@ void EntityClientController::handle_input(float delta) {
 
 	if (do_animate && Task::connection) {
 		// send packets
-		Packet::TrustedMotion packet = { 
+		Packet::Transform packet = { 
 			0,		// uuid
 			x, y,	// pos
 			vx, vy, // vel
-			ax, ay	// acc
+			ax, ay,	// acc
+			angle	// angle
 		};
 
 		Task::connection->dispatch(std::move(packet));

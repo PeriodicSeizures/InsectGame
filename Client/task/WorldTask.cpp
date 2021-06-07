@@ -24,7 +24,8 @@ void WorldTask::on_render() {
 		entity.second->render();
 	}
 
-	client->render();
+	if (client)
+		client->render();
 }
 
 void WorldTask::on_update(float delta) {
@@ -33,7 +34,10 @@ void WorldTask::on_update(float delta) {
 		pair.second->physics(delta);
 	}
 
-	client->handle_input(delta);
+	if (client) {
+		client->handle_input(delta);
+		client->physics(delta);
+	}
 }
 
 void WorldTask::on_tick() {
@@ -59,9 +63,9 @@ void WorldTask::process_packets() {
 		Packet packet = in.pop_front();
 
 		switch (packet.type) {
-		case Packet::Type::SRC_CLIENT_TRUSTED_MOTION: {
-			Packet::TrustedMotion* p = 
-				Packet::deserialize<Packet::TrustedMotion>(packet);
+		case Packet::Type::TRANSFORM: {
+			Packet::Transform* p = 
+				Packet::deserialize<Packet::Transform>(packet);
 			
 			auto&& find = entities.find(p->target);
 			if (find != entities.end()) {
@@ -71,7 +75,8 @@ void WorldTask::process_packets() {
 					p->angle);
 			}
 			break;
-		} case Packet::Type::SRC_SERVER_ENTITY_NEW: {
+		} 
+		case Packet::Type::SRC_SERVER_ENTITY_NEW: {
 			Packet::EntityNew* p = 
 				Packet::deserialize<Packet::EntityNew>(packet);
 
@@ -84,6 +89,24 @@ void WorldTask::process_packets() {
 			}
 			// add the new entity
 			entities.insert({ p->uuid, new_entity });			
+
+			break;
+		} 
+		case Packet::Type::SRC_SERVER_CLIENT_IDENTITY: {
+			Packet::ClientIdentity* p =
+				Packet::deserialize<Packet::ClientIdentity>(packet);
+
+			delete client;
+
+			// upon this receive, set my identity
+			switch (p->type) {
+			case Entity::Type::ANT:
+				client = new EntityPlayerAnt(p->uuid, "crzi");
+				break;
+			case Entity::Type::SPIDER:
+				client = new EntityPlayerSpider(p->uuid, "crzi");
+				break;
+			}
 
 			break;
 		}

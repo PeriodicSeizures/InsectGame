@@ -26,9 +26,11 @@ struct Packet {
 		CHAT64,
 		CHAT128,
 		CHAT256,
-		SRC_CLIENT_TRUSTED_MOTION,
-		SRC_CLIENT_UNTRUSTED_MOTION,
+		TRANSFORM,
+		//SRC_CLIENT_UNTRUSTED_MOTION,
 		SRC_SERVER_ENTITY_NEW,
+		//SRC_CLIENT_REQUEST_TEAM,
+		SRC_SERVER_CLIENT_IDENTITY,
 		count // kind of hacky
 	};
 
@@ -57,31 +59,35 @@ struct Packet {
 	struct Chat32 {
 		static constexpr Packet::Type TYPE = Packet::Type::CHAT32;
 		char message[32];
-		char target[16] = ""; // optional 
+		//char target[16] = ""; // optional 
+		UUID target;
 	};
 
 	struct Chat64 {
 		static constexpr Packet::Type TYPE = Packet::Type::CHAT64;
 		char message[64];
-		char target[16] = ""; // optional 
+		//char target[16] = ""; // optional 
+		UUID target;
 	};
 
 	struct Chat128 {
 		static constexpr Packet::Type TYPE = Packet::Type::CHAT128;
 		char message[128];
-		char target[16] = ""; // optional 
+		//char target[16] = ""; // optional 
+		UUID target;
 	};
 
 	struct Chat256 {
 		static constexpr Packet::Type TYPE = Packet::Type::CHAT256;
 		char message[256];
-		char target[16] = ""; // optional 
+		//char target[16] = ""; // optional 
+		UUID target;
 	};
 
 	// trust the client motion
-	struct TrustedMotion { //  (cheaper for server)
-		static constexpr Packet::Type TYPE = Packet::Type::SRC_CLIENT_TRUSTED_MOTION;
-		UUID target;
+	struct Transform { //  (cheaper for server)
+		static constexpr Packet::Type TYPE = Packet::Type::TRANSFORM;
+		UUID target; // optional due to client
 		float x, y;
 		float vx, vy;
 		float ax, ay;
@@ -89,10 +95,10 @@ struct Packet {
 	};
 
 	// fuck the clients motion
-	struct UnTrustedMotion { // (expensive for server)
-		static constexpr Packet::Type TYPE = Packet::Type::SRC_CLIENT_UNTRUSTED_MOTION;
-		Input input;
-	};
+	//struct UnTrustedMotion { // (expensive for server)
+	//	static constexpr Packet::Type TYPE = Packet::Type::SRC_CLIENT_UNTRUSTED_MOTION;
+	//	Input input;
+	//};
 
 	// declare the existence of a particular entity
 	struct EntityNew {
@@ -100,6 +106,18 @@ struct Packet {
 		UUID uuid;
 		Entity::Type type;
 		char name[16] = "";
+	};
+
+	//struct RequestTeam {
+	//	static constexpr Packet::Type TYPE = Packet::Type::SRC_CLIENT_REQUEST_TEAM;
+	//	Entity::Type type;
+	//};
+
+	// sent by the server to inform the client on who they should be in the game
+	struct ClientIdentity {
+		static constexpr Packet::Type TYPE = Packet::Type::SRC_SERVER_CLIENT_IDENTITY;
+		UUID uuid;
+		Entity::Type type;
 	};
 
 	/*
@@ -137,8 +155,11 @@ struct Packet {
 		sizeof(Chat64),
 		sizeof(Chat128),
 		sizeof(Chat256),
-		sizeof(TrustedMotion),
-		sizeof(UnTrustedMotion),
+		sizeof(Transform),
+		//sizeof(UnTrustedMotion),
+		sizeof(EntityNew),
+		//sizeof(RequestTeam),
+		sizeof(ClientIdentity)
 	};
 
 	/*

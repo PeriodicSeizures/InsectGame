@@ -148,9 +148,13 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="entity\IEntityServerSide.cpp" />
+    <ClCompile Include="entity\EntityPlayer.cpp" />
+    <ClCompile Include="entity\EntityPlayerAnt.cpp" />
+    <ClCompile Include="entity\EntityPlayerSpider.cpp" />
+    <ClCompile Include="entity\IEntity.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="network\tcp_server.cpp" />
+    <ClCompile Include="task\Task.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Utils\Utils.vcxproj">
@@ -158,8 +162,10 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="entity\IEntityServerSide.h" />
+    <ClInclude Include="entity\IEntity.h" />
+    <ClInclude Include="network\PlayerClient.h" />
     <ClInclude Include="network\tcp_server.h" />
+    <ClInclude Include="task\Task.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

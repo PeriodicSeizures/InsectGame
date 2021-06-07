@@ -21,7 +21,19 @@
     <ClCompile Include="network\tcp_server.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="entity\IEntityServerSide.cpp">
+    <ClCompile Include="task\Task.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="entity\EntityPlayer.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="entity\EntityPlayerAnt.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="entity\EntityPlayerSpider.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="entity\IEntity.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -29,7 +41,13 @@
     <ClInclude Include="network\tcp_server.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="entity\IEntityServerSide.h">
+    <ClInclude Include="task\Task.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="entity\IEntity.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="network\PlayerClient.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

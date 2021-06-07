@@ -3,6 +3,7 @@
 
 #include <asio.hpp>
 #include "network/tcp_connection.h"
+#include "PlayerClient.h"
 
 using namespace asio::ip;
 
@@ -10,8 +11,13 @@ class TCPServer
 {
 public:
 	// Order of these is apparently important 
-	std::unordered_map<UUID, 
-		std::shared_ptr<TCPConnection>> connections;
+	//std::unordered_map<UUID,
+	//	std::pair<
+	//		std::shared_ptr<TCPConnection>,
+	//		PlayerClient>
+	//	> connections;
+
+	AsyncQueue<std::shared_ptr<TCPConnection>> connections;
 
 	static std::thread run_thread;
 
@@ -26,28 +32,26 @@ public:
 
 	void start();
 
-	void tick();
-
 	/*
 	* to send an assembled struct (not 'Packet' struct)
 	*/
 	template<class T>
 	void dispatch(T packet) {
 		for (auto&& conn : connections) {
-			conn.second->dispatch(std::move(packet));
+			conn.second.first->dispatch(std::move(packet));
 		}
 	}
 
 	template<class T>
 	void dispatch(T packet, UUID uuid) {
-		connections[uuid]->dispatch(std::move(packet));
+		connections[uuid].first->dispatch(std::move(packet));
 	}
 
 	template<class T>
 	void dispatch_except(T packet, UUID uuid) {
 		for (auto&& conn : connections) {
 			if (conn.first != uuid)
-				conn.second->dispatch(std::move(packet));
+				conn.second.first->dispatch(std::move(packet));
 		}
 	}
 
