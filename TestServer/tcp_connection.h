@@ -21,7 +21,7 @@ public:
 
 	tcp::socket& socket();
 
-	void start();
+	void handshake();
 
 private:
 	TCPConnection(asio::io_context& io_context);

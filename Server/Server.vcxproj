@@ -154,6 +154,7 @@
     <ClCompile Include="entity\IEntity.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="network\tcp_server.cpp" />
+    <ClCompile Include="Player.cpp" />
     <ClCompile Include="task\Task.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -163,8 +164,8 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="entity\IEntity.h" />
-    <ClInclude Include="network\PlayerClient.h" />
     <ClInclude Include="network\tcp_server.h" />
+    <ClInclude Include="Player.h" />
     <ClInclude Include="task\Task.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

@@ -1,10 +1,11 @@
 #include "tcp_server.h"
 
-std::thread TCPServer::run_thread;
-asio::io_context TCPServer::_io_context;
+//std::thread TCPServer::run_thread;
+//asio::io_context TCPServer::_io_context;
 
-TCPServer::TCPServer(unsigned short port) : 
-	_acceptor(_io_context, tcp::endpoint(tcp::v4(), port))
+TCPServer::TCPServer(unsigned short port) :
+	_acceptor(_io_context, tcp::endpoint(tcp::v4(), port)),
+	_ssl_context(asio::ssl::context::tls)
 {
 	do_accept();
 
@@ -17,37 +18,35 @@ TCPServer::~TCPServer() {
 
 void TCPServer::start() {
 	TCPServer::run_thread = std::thread(
-		[]() 
-		{
-			_io_context.run();
-			//TCPServer::_io_context.poll();
-			//std::cout << "exited run\n";
-			
-			std::cout << "exited run\n";
-		}
+		[this]()
+	{
+		_io_context.run();
+
+		std::cout << "exited run\n";
+	}
 	);
 }
 
 void TCPServer::forward(Packet packet) {
 	for (auto&& conn : connections) {
-		conn.second.first->forward(std::move(packet));
+		conn.second->forward(std::move(packet));
 	}
 }
 
 void TCPServer::forward(Packet packet, UUID uuid) {
-	connections[uuid].first->forward(std::move(packet));
+	connections[uuid]->forward(std::move(packet));
 }
 
 void TCPServer::forward_except(Packet packet, UUID uuid) {
 	for (auto&& conn : connections) {
 		if (conn.first != uuid) {
 			//conn.second->out_packets.push_back(std::move(packet));
-			conn.second.first->forward(std::move(packet));
+			conn.second->forward(std::move(packet));
 		}
 	}
 }
 
-void TCPServer::do_accept() 
+void TCPServer::do_accept()
 {
 	//std::hash<std::string> hasher;
 	//UUID uuid = hasher(socket_.remote_endpoint().address().to_string());
@@ -66,43 +65,28 @@ void TCPServer::do_accept()
 				std::hash<std::string> hasher;
 				UUID uuid = hasher(addr + std::to_string(port));
 
-				
-
-				auto conn = std::make_shared<TCPConnection>(std::move(socket), uuid);
 
 
-				// when here it works, not sure tho ...
-				// port = ...
+				auto conn = std::make_shared<TCPConnection>(
+					ssl_socket(std::move(socket), _ssl_context));
 
-				std::cout << "client " << uuid << " has connected from: " << 
-					addr << ", port: " << port << "\n";
+				//std::cout << "client " << uuid << " has connected from: " << 
+				//	addr << ", port: " << port << "\n";
 
-				connections.insert({ uuid, 
-					{conn, {Entity::Type::NONE, uuid} } 
-					});
-
-				conn->start();
+				connections.insert({ uuid, conn });
+				conn->handshake();
 			}
-			catch (const std::system_error& ec) {
-				std::cout << "error in connect: " << ec.what() << "\n";
+			catch (const std::system_error& e) {
+				std::cout << "error in connect: " << e.what() << "\n";
 			}
-
-			//asio::steady_timer timer(_io_context);
-			//timer.expires_after(std::chrono::seconds(5));
-			//timer.async_wait([conn](const asio::error_code&) {
-			//	Packet::Chat32 chat32 = {"Hello, World!"};
-			//	conn->send_packet(Packet::serialize(chat32, chat32.type));
-			//	});
-
-			//std::make_shared<TCPConnection>(_io_context, std::move(socket))->start();
 		}
-		
+
 		do_accept(); // loops back to continue accept
 	});
 
 
 	/*
-	* jsut print all incoming messages 
+	* jsut print all incoming messages
 	*/
 	//while (true) {
 	//	for (auto&& entry : connections) {

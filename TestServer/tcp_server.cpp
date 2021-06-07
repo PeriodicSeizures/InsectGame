@@ -22,7 +22,7 @@ void TCPServer::handle_accept(TCPConnection::pointer new_connection,
 {
 	if (!error)
 	{
-		new_connection->start();
+		new_connection->handshake();
 	}
 
 	this->start_accept(); // loops back to give work

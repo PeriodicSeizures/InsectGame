@@ -20,7 +20,7 @@ tcp::socket& TCPConnection::socket()
 	return socket_;
 }
 
-void TCPConnection::start() {
+void TCPConnection::handshake() {
 	message_ = make_daytime_string();
 	asio::async_write(socket_, asio::buffer(message_),
 		std::bind(&TCPConnection::handle_write, shared_from_this(),

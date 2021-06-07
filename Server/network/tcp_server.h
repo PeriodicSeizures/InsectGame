@@ -17,11 +17,12 @@ public:
 	//		PlayerClient>
 	//	> connections;
 
-	AsyncQueue<std::shared_ptr<TCPConnection>> connections;
+	std::unordered_map<UUID, std::shared_ptr<TCPConnection>> connections;
 
-	static std::thread run_thread;
+	std::thread run_thread;
 
-	static asio::io_context _io_context;
+	asio::io_context _io_context;
+	asio::ssl::context _ssl_context;
 	tcp::acceptor _acceptor;
 
 public:
