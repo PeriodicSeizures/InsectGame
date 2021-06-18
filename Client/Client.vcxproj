@@ -125,14 +125,14 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>C:\libs\SDL2-2.0.14\include;C:\libs\SDL2_image-2.0.5\include;$(SolutionDir)Utils;C:\libs\asio-1.18.2\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\Program Files\OpenSSL-Win64\include;C:\libs\SDL2-2.0.14\include;C:\libs\SDL2_image-2.0.5\include;$(SolutionDir)Utils;C:\libs\asio-1.18.2\include</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>C:\libs\SDL2-2.0.14\lib\x64;C:\libs\SDL2_image-2.0.5\lib\x64</AdditionalLibraryDirectories>
-      <AdditionalDependencies>SDL2.lib;SDL2_image.lib</AdditionalDependencies>
+      <AdditionalLibraryDirectories>"C:\Program Files\OpenSSL-Win64\lib\VC\static";C:\libs\SDL2-2.0.14\lib\x64;C:\libs\SDL2_image-2.0.5\lib\x64</AdditionalLibraryDirectories>
+      <AdditionalDependencies>SDL2.lib;SDL2_image.lib;Advapi32.lib;User32.lib;crypt32.lib;libssl64MDd.lib;libcrypto64MDd.lib</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -143,7 +143,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>C:\libs\SDL2-2.0.14\include;C:\libs\SDL2_image-2.0.5\include;$(SolutionDir)Utils;C:\libs\asio-1.18.2\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\Program Files\OpenSSL-Win64\include;C:\libs\SDL2-2.0.14\include;C:\libs\SDL2_image-2.0.5\include;$(SolutionDir)Utils;C:\libs\asio-1.18.2\include</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
@@ -151,33 +151,22 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>C:\libs\SDL2-2.0.14\lib\x64;C:\libs\SDL2_image-2.0.5\lib\x64</AdditionalLibraryDirectories>
-      <AdditionalDependencies>SDL2.lib;SDL2_image.lib</AdditionalDependencies>
+      <AdditionalLibraryDirectories>"C:\Program Files\OpenSSL-Win64\lib\VC\static";C:\libs\SDL2-2.0.14\lib\x64;C:\libs\SDL2_image-2.0.5\lib\x64</AdditionalLibraryDirectories>
+      <AdditionalDependencies>SDL2.lib;SDL2_image.lib;Advapi32.lib;User32.lib;crypt32.lib;libssl64MD.lib;libcrypto64MD.lib</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="impl\ClientImplement.cpp" />
+    <ClCompile Include="network\Client.cpp" />
     <ClCompile Include="engine\Engine.cpp" />
-    <ClCompile Include="entity\EntityClientController.cpp" />
-    <ClCompile Include="entity\EntityPlayerAnt.cpp" />
-    <ClCompile Include="entity\EntityPlayerSpider.cpp" />
-    <ClCompile Include="entity\IEntity.cpp" />
-    <ClCompile Include="gui\GUIButton.cpp" />
-    <ClCompile Include="gui\GUIElement.cpp" />
-    <ClCompile Include="gui\GUILabel.cpp" />
-    <ClCompile Include="gui\GUITextInput.cpp" />
-    <ClCompile Include="task\CommandTask.cpp" />
-    <ClCompile Include="task\GUITask.cpp" />
-    <ClCompile Include="task\MainMenuTask.cpp" />
     <ClCompile Include="main.cpp" />
-    <ClCompile Include="task\PauseMenuTask.cpp" />
-    <ClCompile Include="task\Task.cpp" />
-    <ClCompile Include="task\WorldTask.cpp" />
+    <ClCompile Include="network\TCPClient.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="engine\Engine.h" />
-    <ClInclude Include="entity\IEntity.h" />
-    <ClInclude Include="gui\GUIElement.h" />
-    <ClInclude Include="task\Task.h" />
+    <ClInclude Include="impl\ClientImplement.h" />
+    <ClInclude Include="network\Client.h" />
+    <ClInclude Include="network\TCPClient.h" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Utils\Utils.vcxproj">

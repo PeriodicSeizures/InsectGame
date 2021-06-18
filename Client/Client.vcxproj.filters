@@ -21,46 +21,13 @@
     <ClCompile Include="engine\Engine.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="task\Task.cpp">
+    <ClCompile Include="network\Client.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="task\WorldTask.cpp">
+    <ClCompile Include="impl\ClientImplement.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="gui\GUIElement.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="gui\GUILabel.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="task\MainMenuTask.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="gui\GUIButton.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="gui\GUITextInput.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="task\GUITask.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="task\PauseMenuTask.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="task\CommandTask.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="entity\EntityClientController.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="entity\IEntity.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="entity\EntityPlayerAnt.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="entity\EntityPlayerSpider.cpp">
+    <ClCompile Include="network\TCPClient.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -68,13 +35,13 @@
     <ClInclude Include="engine\Engine.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="task\Task.h">
+    <ClInclude Include="network\Client.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="gui\GUIElement.h">
+    <ClInclude Include="impl\ClientImplement.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="entity\IEntity.h">
+    <ClInclude Include="network\TCPClient.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

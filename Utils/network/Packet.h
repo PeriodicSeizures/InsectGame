@@ -4,8 +4,7 @@
 #include <stdint.h>
 #include <string>
 #include <assert.h>
-#include "ByteReader.h"
-#include "ByteWriter.h"
+#include <vector>
 #include "../Common.h"
 
 /* * * * * * * * * * * * * * * * * * * * * * * *
@@ -104,9 +103,13 @@ struct Packet {
 	struct EntityNew {
 		static constexpr Packet::Type TYPE = Packet::Type::SRC_SERVER_ENTITY_NEW;
 		UUID uuid;
-		Entity::Type type;
+		//Entity::Type type;
 		char name[16] = "";
 	};
+
+	//struct EntityDelete {
+	//
+	//};
 
 	//struct RequestTeam {
 	//	static constexpr Packet::Type TYPE = Packet::Type::SRC_CLIENT_REQUEST_TEAM;
@@ -114,10 +117,11 @@ struct Packet {
 	//};
 
 	// sent by the server to inform the client on who they should be in the game
-	struct ClientIdentity {
+	struct DelegateIdentity {
 		static constexpr Packet::Type TYPE = Packet::Type::SRC_SERVER_CLIENT_IDENTITY;
 		UUID uuid;
-		Entity::Type type;
+		char name[16] = "";
+		//Entity::Type type;
 	};
 
 	/*
@@ -142,7 +146,8 @@ struct Packet {
 
 	template<typename T>
 	static T* deserialize(Packet& in) {
-		return static_cast<T*>((void*)in.data);
+		//return static_cast<T*>((void*)in.data);
+		return static_cast<T*>((void*)in.data.data());
 	}
 
 
@@ -159,20 +164,16 @@ struct Packet {
 		//sizeof(UnTrustedMotion),
 		sizeof(EntityNew),
 		//sizeof(RequestTeam),
-		sizeof(ClientIdentity)
+		sizeof(DelegateIdentity)
 	};
 
 	/*
 	* Member variables
 	*/
 	Type type;
-	char* data;
+	//char* data;
+	std::vector<char> data;
 
 };
-
-//struct OwnedPacket {
-//	UUID uuid;
-//	Packet packet;
-//};
 
 #endif

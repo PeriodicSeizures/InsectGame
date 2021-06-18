@@ -120,13 +120,17 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>C:\libs\asio-1.18.2\include;</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\Program Files\OpenSSL-Win64\include;C:\libs\asio-1.18.2\include;</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
+    <Lib>
+      <AdditionalDependencies>libcrypto64MDd.lib;libssl64MDd.lib;crypt32.lib;</AdditionalDependencies>
+      <AdditionalLibraryDirectories>"C:\Program Files\OpenSSL-Win64\lib\VC\static";</AdditionalLibraryDirectories>
+    </Lib>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
@@ -136,7 +140,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>C:\libs\asio-1.18.2\include;</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\Program Files\OpenSSL-Win64\include;C:\libs\asio-1.18.2\include;</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
@@ -145,19 +149,23 @@
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
+    <Lib>
+      <AdditionalDependencies>libcrypto64MD.lib;libssl64MD.lib;crypt32.lib;</AdditionalDependencies>
+      <AdditionalLibraryDirectories>"C:\Program Files\OpenSSL-Win64\lib\VC\static";</AdditionalLibraryDirectories>
+    </Lib>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="network\ByteReader.cpp" />
-    <ClCompile Include="network\ByteWriter.cpp" />
+    <ClCompile Include="impl\EntityImplement.cpp" />
+    <ClCompile Include="entity\EntityPlayer.cpp" />
+    <ClCompile Include="entity\IEntity.cpp" />
     <ClCompile Include="network\Packet.cpp" />
     <ClCompile Include="network\tcp_connection.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="AsyncQueue.h" />
     <ClInclude Include="Common.h" />
-    <ClInclude Include="entity\Entity.h" />
-    <ClInclude Include="network\ByteReader.h" />
-    <ClInclude Include="network\ByteWriter.h" />
+    <ClInclude Include="entity\IEntity.h" />
+    <ClInclude Include="impl\EntityImplement.h" />
     <ClInclude Include="network\Packet.h" />
     <ClInclude Include="network\tcp_connection.h" />
     <ClInclude Include="rapidjson\allocators.h" />

@@ -16,21 +16,39 @@
 
 using namespace asio::ip;
 
+enum class Side {
+	CLIENT, SERVER
+};
+
 typedef asio::ssl::stream<tcp::socket> ssl_socket;
+struct OwnedPacket;
 
 class TCPConnection : public std::enable_shared_from_this<TCPConnection>
 {
 private:
+	const Side SIDE;
+
 	ssl_socket _socket;
 	AsyncQueue<Packet> out_packets;
 	Packet temp;
 
-public:
-	AsyncQueue<Packet> in_packets;
+	AsyncQueue<OwnedPacket> *in_packets_s;
+	AsyncQueue<Packet> *in_packets_c;
+
+//public:
+//	UUID uuid;
 
 public:
-	TCPConnection(ssl_socket socket);
+	TCPConnection(ssl_socket, AsyncQueue<OwnedPacket>*); // server
+	TCPConnection(ssl_socket, AsyncQueue<Packet>*); // client
 	~TCPConnection();
+
+	ssl_socket& socket();
+
+	bool is_open();
+	void close();
+
+	//UUID getUUID();
 
 	/*
 	* Begin async readers and writers
@@ -38,38 +56,35 @@ public:
 	void handshake();
 
 	/*
-	* To connect to server (used by client)
-	* Might cause issues if used on a server architecture
+	* Send data along connection
 	*/
-	void connect_to_server(asio::io_context& _io_context,
-		std::string host,
-		std::string port);
-
-
 	template<class T>
-	void dispatch(T packet) {
-		auto size = sizeof(T);
-		if (size) {
-			Packet __packet = { packet.TYPE, new char[size] };
-			std::memcpy(__packet.data, (void*)&packet, size);
-			forward(std::move(__packet));
+	void send(T p) {
+		//auto t = p.TYPE;
+		//auto t2 = Packet::Type::CHAT128;
+		Packet __packet = { p.TYPE };
+		//__packet.type = decltype(packet)::TYPE;
+		if (sizeof(T)) {
+			__packet.data.resize(sizeof(T));
+			std::memcpy(__packet.data.data(), (void*)&p, sizeof(T));
 		}
-		else {
-			forward({ packet.TYPE });
-		}
+		bool was_empty = out_packets.empty();
+		out_packets.push_back(std::move(__packet));
+		if (was_empty)
+			write_header();
 	}
 
-	void forward(Packet packet);
-
 private:
-
-
 	void read_header();
 	void read_body();
 
 	void write_header();
 	void write_body();
+};
 
+struct OwnedPacket {
+	std::shared_ptr<TCPConnection> owner;
+	Packet packet;
 };
 
 #endif

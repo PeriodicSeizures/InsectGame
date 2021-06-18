@@ -2,7 +2,6 @@
 #define COMMON_H
 
 #include <stdint.h>
-#include "entity/Entity.h"
 
 typedef size_t UUID;
 

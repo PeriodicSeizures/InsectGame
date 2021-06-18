@@ -1,62 +1,92 @@
 #include "tcp_server.h"
 
-//std::thread TCPServer::run_thread;
-//asio::io_context TCPServer::_io_context;
+//static std::string get_password()
+//{
+//	return "test";
+//}
 
 TCPServer::TCPServer(unsigned short port) :
 	_acceptor(_io_context, tcp::endpoint(tcp::v4(), port)),
-	_ssl_context(asio::ssl::context::tls)
-{
-	do_accept();
+	_ssl_context(asio::ssl::context::tls) {
+	/*
+	* certificate and encryption init
+	*/
+	//_ssl_context.set_options(
+	//	asio::ssl::context::default_workarounds
+	//	| asio::ssl::context::no_sslv2
+	//	| asio::ssl::context::single_dh_use);
+	_ssl_context.set_verify_mode(asio::ssl::verify_none);
+	//_ssl_context.set_password_callback(std::bind(&get_password));
+	//_ssl_context.cer
+	_ssl_context.use_certificate_chain_file("newcert.pem");
+	_ssl_context.use_private_key_file("privkey.pem", asio::ssl::context::pem);
+	//// for diffie helman?
+	_ssl_context.use_tmp_dh_file("dh1024.pem");
 
-	//TCPServer::_io_context.run();
 }
 
 TCPServer::~TCPServer() {
-	_io_context.stop();
+	stop();
 }
 
 void TCPServer::start() {
-	TCPServer::run_thread = std::thread(
-		[this]()
-	{
+	do_accept();
+
+	alive = true;
+	ctx_thread = std::thread([this](){
 		_io_context.run();
+	});
 
-		std::cout << "exited run\n";
-	}
-	);
-}
-
-void TCPServer::forward(Packet packet) {
-	for (auto&& conn : connections) {
-		conn.second->forward(std::move(packet));
-	}
-}
-
-void TCPServer::forward(Packet packet, UUID uuid) {
-	connections[uuid]->forward(std::move(packet));
-}
-
-void TCPServer::forward_except(Packet packet, UUID uuid) {
-	for (auto&& conn : connections) {
-		if (conn.first != uuid) {
-			//conn.second->out_packets.push_back(std::move(packet));
-			conn.second->forward(std::move(packet));
+	update_thread = std::thread([this]() {
+		while (alive) {
+			on_update();
 		}
+	});
+
+	while (alive) {
+		on_tick();
+		std::this_thread::sleep_for(std::chrono::milliseconds(50));
 	}
+}
+
+void TCPServer::stop() {
+	alive = false;
+	_io_context.stop();
+
+	if (ctx_thread.joinable())
+		ctx_thread.join();
+
+	if (update_thread.joinable())
+		update_thread.join();
+
+	_io_context.restart();
+}
+
+void TCPServer::on_update() {
+
+	in_packets.wait();
+
+	size_t limit = 20;
+	while (!in_packets.empty() && limit--) {
+		auto&& owned_packet = in_packets.pop_front();
+
+		on_packet(owned_packet.owner, std::move(owned_packet.packet));
+	}
+}
+
+bool TCPServer::is_alive() {
+	return alive;
 }
 
 void TCPServer::do_accept()
 {
-	//std::hash<std::string> hasher;
-	//UUID uuid = hasher(socket_.remote_endpoint().address().to_string());
-
 	_acceptor.async_accept(
 		[this](const asio::error_code& ec, tcp::socket socket)
 	{
 		if (!ec)
 		{
-			try {
+			try 
+			{
 				asio::ip::tcp::endpoint endpoint = socket.remote_endpoint();
 
 				std::string addr = endpoint.address().to_string();
@@ -68,31 +98,23 @@ void TCPServer::do_accept()
 
 
 				auto conn = std::make_shared<TCPConnection>(
-					ssl_socket(std::move(socket), _ssl_context));
+					ssl_socket(std::move(socket), _ssl_context),
+					&in_packets);
 
-				//std::cout << "client " << uuid << " has connected from: " << 
-				//	addr << ", port: " << port << "\n";
-
-				connections.insert({ uuid, conn });
-				conn->handshake();
+				// Whether to accept or deny the connection
+				if (on_join(conn)) {
+					connections.insert(conn);
+					conn->handshake();
+				}
 			}
-			catch (const std::system_error& e) {
+			catch (const std::system_error& e) 
+			{
 				std::cout << "error in connect: " << e.what() << "\n";
 			}
 		}
 
 		do_accept(); // loops back to continue accept
 	});
-
-
-	/*
-	* jsut print all incoming messages
-	*/
-	//while (true) {
-	//	for (auto&& entry : connections) {
-	//		//entry.second->
-	//	}
-	//}
 
 }
 
