@@ -24,7 +24,7 @@
     <ClCompile Include="network\Client.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="impl\ClientImplement.cpp">
+    <ClCompile Include="impl\ClientImpl.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="network\TCPClient.cpp">
@@ -38,7 +38,7 @@
     <ClInclude Include="network\Client.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="impl\ClientImplement.h">
+    <ClInclude Include="impl\ClientImpl.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="network\TCPClient.h">

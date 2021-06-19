@@ -4,17 +4,25 @@
 #include <unordered_set>
 
 //#pragma comment(lib, "crypt32.lib")
-#include "network/tcp_server.h"
+#include "tcp_server.h"
+#include "entity/IEntity.h"
+#include "PlayerList.h"
 
 class Server final : public TCPServer
 {
 private:
-	//std::unordered_map<UUID, std::shared_ptr<TCPConnection>>
-	//	mapped_players;
+	// special player container
+	//PlayerList playerList;
+
+	// all entities
+	std::unordered_map<UUID, IEntity::ptr> uuid_entity_map;
 
 public:
 	Server(unsigned short port);
 	~Server();
+
+public:
+	UUID generateUUID();
 
 private:
 	/*
@@ -25,9 +33,9 @@ private:
 	/*
 	* events
 	*/
-	bool on_join(std::shared_ptr<TCPConnection>) override;
-	void on_packet(std::shared_ptr<TCPConnection>, Packet) override;
-	void on_quit(std::shared_ptr<TCPConnection>) override;
+	bool on_join(TCPConnection::ptr) override;
+	void on_packet(TCPConnection::ptr, Packet) override;
+	void on_quit(TCPConnection::ptr) override;
 };
 
 extern Server* SERVER;

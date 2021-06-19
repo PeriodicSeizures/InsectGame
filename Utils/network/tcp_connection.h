@@ -6,6 +6,7 @@
 #include <unordered_map>
 #include "Packet.h"
 #include "../AsyncQueue.h"
+#include "../entity/IEntity.h" //
 
 #ifdef _WIN32
 #define _WIN32_WINNT 0x0A00
@@ -25,18 +26,36 @@ struct OwnedPacket;
 
 class TCPConnection : public std::enable_shared_from_this<TCPConnection>
 {
+public:
+	typedef std::shared_ptr<TCPConnection> ptr;
+
 private:
+	/*
+	* REQUIRED CONNECTION MEMBERS
+	* do not touch!
+	*/
 	const Side SIDE;
 
 	ssl_socket _socket;
 	AsyncQueue<Packet> out_packets;
 	Packet temp;
+	bool open = false;
 
 	AsyncQueue<OwnedPacket> *in_packets_s;
 	AsyncQueue<Packet> *in_packets_c;
 
-//public:
-//	UUID uuid;
+	//uint16_t in_rate; // count avg packets per second
+
+public:
+	/*
+	* mess with these
+	* 
+	* mainly used by server 
+	*/
+	UUID uuid = -1;
+	std::string host;
+	uint16_t port;
+	EntityPlayer::ptr entity;
 
 public:
 	TCPConnection(ssl_socket, AsyncQueue<OwnedPacket>*); // server
@@ -49,6 +68,7 @@ public:
 	void close();
 
 	//UUID getUUID();
+	//void setUUID(UUID uuid);
 
 	/*
 	* Begin async readers and writers
@@ -83,7 +103,7 @@ private:
 };
 
 struct OwnedPacket {
-	std::shared_ptr<TCPConnection> owner;
+	TCPConnection::ptr owner;
 	Packet packet;
 };
 

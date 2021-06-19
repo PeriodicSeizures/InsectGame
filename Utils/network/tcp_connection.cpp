@@ -59,7 +59,8 @@ ssl_socket& TCPConnection::socket() {
 
 bool TCPConnection::is_open() {
 	// return the status
-	return _socket.lowest_layer().is_open();
+	//return _socket.lowest_layer().is_open();
+	return open;
 }
 
 void TCPConnection::close() {
@@ -75,6 +76,10 @@ void TCPConnection::close() {
 //UUID TCPConnection::getUUID() {
 //	return uuid;
 //}
+//
+//void TCPConnection::setUUID(UUID uuid) {
+//	this->uuid = uuid;
+//}
 
 void TCPConnection::handshake() {
 
@@ -85,7 +90,10 @@ void TCPConnection::handshake() {
 		[this, self](const std::error_code& e)
 	{
 		if (!e) {
-			read_header();
+			open = true;
+			//if (SIDE == Side::CLIENT)
+				read_header();
+			//do nothing yet
 		}
 		else {
 			std::cout << "ssl handshake error: " << e.message() << "\n";
@@ -106,6 +114,7 @@ void TCPConnection::read_header() {
 		}
 		else {
 			std::cout << "read header error: " << e.message() << "\n";
+			open = false;
 		}
 	}
 	);
@@ -142,6 +151,7 @@ void TCPConnection::read_body() {
 			}
 			else {
 				std::cout << "read body error: " << e.message() << "\n";
+				open = false;
 			}
 		}
 		);
@@ -166,6 +176,7 @@ void TCPConnection::write_header() {
 		}
 		else {
 			std::cout << "write header error: " << e.message() << "\n";
+			open = false;
 		}
 	}
 	);
@@ -190,6 +201,7 @@ void TCPConnection::write_body() {
 			}
 			else {
 				std::cout << "write body error: " << e.message() << "\n";
+				open = false;
 			}
 		}
 		);

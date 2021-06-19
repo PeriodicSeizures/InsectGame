@@ -1,10 +1,10 @@
-#include "ClientImplement.h"
+#include "ClientImpl.h"
 
-ClientImplement::ClientImplement() {
+ClientImpl::ClientImpl() {
 
 }
 
-void ClientImplement::on_render(float x, float y, 
+void ClientImpl::on_render(float x, float y,
 	float vx, float vy, 
 	float ax, float ay) {
 

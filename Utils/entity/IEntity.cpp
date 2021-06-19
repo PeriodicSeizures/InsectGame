@@ -3,8 +3,13 @@
 #include "IEntity.h"
 #include "../network/Packet.h"
 
-IEntity::IEntity(UUID uuid, EntityImplement* impl)
+IEntity::IEntity(UUID uuid, EntityImpl* impl)
 	: uuid(uuid), impl(impl) {}
+
+IEntity::~IEntity() {
+	//assert(impl);
+	delete impl;
+}
 
 void IEntity::on_physics() {
 	x_prev = x;
@@ -89,7 +94,3 @@ void IEntity::set_transform(float x, float y,
 	this->ay = ay;
 	this->angle = angle;
 }
-
-//void IEntity::setImpl(EntityImplement* impl) {
-//	this->impl = impl;
-//}

@@ -156,13 +156,19 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="entity\IEntity.h" />
+    <ClInclude Include="network\Profile.h" />
     <ClInclude Include="network\Server.h" />
     <ClInclude Include="network\tcp_server.h" />
+    <ClInclude Include="network\PlayerList.h" />
+    <ClInclude Include="impl\ServerImpl.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="impl\ServerImplPlayer.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="network\Server.cpp" />
     <ClCompile Include="network\tcp_server.cpp" />
+    <ClCompile Include="network\PlayerList.cpp" />
+    <ClCompile Include="impl\ServerImpl.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

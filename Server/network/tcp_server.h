@@ -5,17 +5,21 @@
 
 #include <unordered_set>
 #include "network/tcp_connection.h"
+#include "PlayerList.h"
 
 using namespace asio::ip;
 
 class TCPServer
 {
 private:
-	std::unordered_set<std::shared_ptr<TCPConnection>> connections;
+	std::unordered_set<TCPConnection::ptr> connections;
+
+	//PlayerList playerList;
+	//std::unordered_map<UUID, IEntity::ptr> uuid_entity_map;
+	//std::unordered_map<UUID, std::shared_ptr<TCPConnection>> uuid_conn_map;
 
 	std::thread ctx_thread;
 	std::thread update_thread;
-	//std::thread tick_thread;
 
 	asio::io_context _io_context;
 	asio::ssl::context _ssl_context;
@@ -45,14 +49,14 @@ public:
 	* target connection
 	*/
 	template<class T>
-	void send_to(T packet, std::shared_ptr<TCPConnection> connection) {
+	void send_to(T packet, TCPConnection::ptr connection) {
+		std::cout << "send_to()\n";
 		if (connection && connection->is_open()) {
 			connection->send(std::move(packet));
 		}
 		else {
 			// remove
-			connection.reset();
-			connections.erase(connection);
+			disconnect(connection, false);			
 		}
 	}
 
@@ -73,7 +77,7 @@ public:
 	* connection
 	*/
 	template<class T>
-	void send_except(T packet, std::shared_ptr<TCPConnection> connection) {
+	void send_except(T packet, TCPConnection::ptr connection) {
 		for (auto&& conn : connections) {
 			if (conn != connection)
 				send_to(std::move(packet), conn);
@@ -87,6 +91,18 @@ public:
 	*/
 	bool is_alive();
 
+	/*
+	* generateUUID(): generate a random uuid that is unique in
+	*/
+	//UUID generateUUID();
+
+	/*
+	* disconnect(...): disconnect a connection, either forcefully or peacefully
+	*	- forced: kick / free
+	*	- !forced: free
+	*/
+	void disconnect(TCPConnection::ptr connection, bool forced);
+
 private:
 	/*
 	* Server logic methods
@@ -99,9 +115,9 @@ private:
 	/*
 	* Client based events / methods
 	*/
-	virtual bool on_join(std::shared_ptr<TCPConnection> connection) = 0;
-	virtual void on_packet(std::shared_ptr<TCPConnection> owner, Packet packet) = 0;
-	virtual void on_quit(std::shared_ptr<TCPConnection> connection) = 0;
+	virtual bool on_join(TCPConnection::ptr) = 0;
+	virtual void on_packet(TCPConnection::ptr, Packet) = 0;
+	virtual void on_quit(TCPConnection::ptr) = 0;
 
 };
 

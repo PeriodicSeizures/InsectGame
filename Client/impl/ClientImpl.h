@@ -3,9 +3,9 @@
 #include "entity/IEntity.h"
 #include "../engine/Engine.h"
 
-class ClientImplement : public EntityImplement {
+class ClientImpl : public EntityImpl {
 public:
-	ClientImplement();
+	ClientImpl();
 
 public:
 	virtual void on_render(float x, float y,

@@ -51,7 +51,8 @@ public:
 	*/
 	template<class T>
 	void send(T packet) {
-		connection->send(std::move(packet));
+		if (connection && connection->is_open())
+			connection->send(std::move(packet));
 	}
 
 	/*

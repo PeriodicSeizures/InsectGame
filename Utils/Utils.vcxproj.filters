@@ -24,7 +24,7 @@
     <ClCompile Include="entity\IEntity.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="impl\EntityImplement.cpp">
+    <ClCompile Include="impl\EntityImpl.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="entity\EntityPlayer.cpp">
@@ -158,7 +158,7 @@
     <ClInclude Include="entity\IEntity.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="impl\EntityImplement.h">
+    <ClInclude Include="impl\EntityImpl.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

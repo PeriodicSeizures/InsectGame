@@ -155,7 +155,7 @@
     </Lib>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="impl\EntityImplement.cpp" />
+    <ClCompile Include="impl\EntityImpl.cpp" />
     <ClCompile Include="entity\EntityPlayer.cpp" />
     <ClCompile Include="entity\IEntity.cpp" />
     <ClCompile Include="network\Packet.cpp" />
@@ -165,7 +165,7 @@
     <ClInclude Include="AsyncQueue.h" />
     <ClInclude Include="Common.h" />
     <ClInclude Include="entity\IEntity.h" />
-    <ClInclude Include="impl\EntityImplement.h" />
+    <ClInclude Include="impl\EntityImpl.h" />
     <ClInclude Include="network\Packet.h" />
     <ClInclude Include="network\tcp_connection.h" />
     <ClInclude Include="rapidjson\allocators.h" />

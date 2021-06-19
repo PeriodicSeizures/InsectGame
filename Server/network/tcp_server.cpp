@@ -70,12 +70,30 @@ void TCPServer::on_update() {
 	while (!in_packets.empty() && limit--) {
 		auto&& owned_packet = in_packets.pop_front();
 
-		on_packet(owned_packet.owner, std::move(owned_packet.packet));
+		// might have issue
+		if (!owned_packet.owner->is_open())
+			disconnect(owned_packet.owner, false);
+		else
+			on_packet(owned_packet.owner, std::move(owned_packet.packet));
+
+		//owned_packet.owner.reset()
 	}
 }
 
 bool TCPServer::is_alive() {
 	return alive;
+}
+
+void TCPServer::disconnect(TCPConnection::ptr connection, bool forced) {
+
+	// kick
+	if (forced) {
+		connection->close();
+	}
+
+	// free
+	on_quit(connection);
+	connections.erase(connection);
 }
 
 void TCPServer::do_accept()
@@ -103,9 +121,10 @@ void TCPServer::do_accept()
 
 				// Whether to accept or deny the connection
 				if (on_join(conn)) {
-					connections.insert(conn);
 					conn->handshake();
+					connections.insert(conn);
 				}
+				conn.reset();
 			}
 			catch (const std::system_error& e) 
 			{

@@ -1,9 +1,11 @@
 #include "Client.h"
-#include "../impl/ClientImplement.h"
+#include "../impl/ClientImpl.h"
 
 Client* CLIENT = nullptr;
 
-Client::Client() : player(new EntityPlayer(0, "", new ClientImplement())) {}
+Client::Client() {
+	player = std::make_shared<EntityPlayer>(0, "", new ClientImpl());
+}
 
 Client::~Client() {}
 
@@ -94,7 +96,7 @@ void Client::on_tick() {
 
 	// do something per 1/20 seconds
 	for (auto&& entity : entities) {
-		entity.second.on_tick();
+		entity.second->on_tick();
 	}
 
 	player->on_tick();
@@ -107,15 +109,15 @@ void Client::on_render() {
 	// ...
 	for (auto&& entity : entities) {
 		// call impl->on_render for all entities
-		static_cast<ClientImplement*>(entity.second.impl)->
-			on_render(entity.second.x,
-				entity.second.y,
-				entity.second.vx,
-				entity.second.vy,
-				entity.second.ax,
-				entity.second.ay);
+		static_cast<ClientImpl*>(entity.second->impl)->
+			on_render(entity.second->x,
+				entity.second->y,
+				entity.second->vx,
+				entity.second->vy,
+				entity.second->ax,
+				entity.second->ay);
 	}
-	static_cast<ClientImplement*>(player->impl)->
+	static_cast<ClientImpl*>(player->impl)->
 		on_render(player->x, 
 			player->y, 
 			player->vx, 
@@ -129,23 +131,31 @@ void Client::on_render() {
 void Client::on_packet(Packet packet) {
 	// what to do when a packet is received
 	switch (packet.type) {
-	case Packet::Type::SRC_SERVER_ENTITY_NEW: {
-		auto t = Packet::deserialize<Packet::EntityNew>(packet);
-		// add to map
-		entities.insert({ t->uuid, 
-			EntityPlayer(t->uuid, t->name, new ClientImplement()) });
-		break;
-	}
-	case Packet::Type::TRANSFORM: {		
+	case Packet::Type::TRANSFORM: {
 		auto t = Packet::deserialize<Packet::Transform>(packet);
 		auto&& find = entities.find(t->target);
 		if (find != entities.end()) {
 			/*
 			* move the uuid player
 			*/
-			find->second.set_transform(t->x, t->y, t->vx, t->vy, t->ax, t->ay, t->angle);
+			find->second->set_transform(t->x, t->y, t->vx, t->vy, t->ax, t->ay, t->angle);
 		}
 		break;
 	}
+	case Packet::Type::SRC_SERVER_PLAYER_NEW: {
+		auto t = Packet::deserialize<Packet::PlayerNew>(packet);
+		// add to map
+		entities.insert({ t->uuid, 
+			std::make_shared<EntityPlayer>(t->uuid, t->name, new ClientImpl()) });
+		break;
+	}
+	case Packet::Type::SRC_SERVER_PLAYER_IDENTITY: {
+		auto t = Packet::deserialize<Packet::PlayerIdentity>(packet);
+
+		this->player->uuid = t->uuid;
+
+		break;
+	}
+
 	}
 }

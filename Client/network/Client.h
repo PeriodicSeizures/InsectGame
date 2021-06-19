@@ -8,9 +8,9 @@
 class Client : public TCPClient {
 
 private:
-	std::unordered_map<UUID, EntityPlayer> entities;
+	std::unordered_map<UUID, IEntity::ptr> entities;
 
-	EntityPlayer *player;
+	EntityPlayer::ptr player;
 
 public:
 	Client();

@@ -156,7 +156,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="impl\ClientImplement.cpp" />
+    <ClCompile Include="impl\ClientImpl.cpp" />
     <ClCompile Include="network\Client.cpp" />
     <ClCompile Include="engine\Engine.cpp" />
     <ClCompile Include="main.cpp" />
@@ -164,7 +164,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="engine\Engine.h" />
-    <ClInclude Include="impl\ClientImplement.h" />
+    <ClInclude Include="impl\ClientImpl.h" />
     <ClInclude Include="network\Client.h" />
     <ClInclude Include="network\TCPClient.h" />
   </ItemGroup>

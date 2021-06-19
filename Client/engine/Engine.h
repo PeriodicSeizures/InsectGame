@@ -1,7 +1,9 @@
 #pragma once
+
 #include <SDL.h>
 #include <string>
 #include <vector>
+
 namespace Engine {
 
 	static constexpr SDL_Color BLACK = { 0x00, 0x00, 0x00, 0xFF };

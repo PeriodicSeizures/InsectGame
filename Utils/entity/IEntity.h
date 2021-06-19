@@ -1,14 +1,16 @@
 #pragma once
+
 #include <string>
+#include <memory>
 #include "../Common.h"
-#include "../impl/EntityImplement.h"
+#include "../impl/EntityImpl.h"
 
-class IEntity
+class IEntity : public std::enable_shared_from_this<IEntity>
 {
-private:
-	
-
 public:
+	// ptr
+	typedef std::shared_ptr<IEntity> ptr;
+
 	UUID uuid;
 
 	float x = 0, y = 0,
@@ -23,40 +25,33 @@ public:
 	static constexpr float fric = 12.f;
 	static constexpr bool is_kinematic = true;
 
-	EntityImplement* impl;
+	EntityImpl* impl;
 
 public:
-	IEntity(UUID uuid, EntityImplement* impl);
-
-private:
-	// used by both server and client
-	void on_physics();
+	IEntity(UUID uuid, EntityImpl* impl);
+	virtual ~IEntity();
 
 public:
+	virtual void on_physics();
+
 	virtual void on_tick() = 0;
-
-	// have client override this
-	//virtual void on_render();
 
 	void set_transform(float x, float y,
 		float vx, float vy,
 		float ax, float ay,
 		float angle);
-
-	//void setImpl(EntityImplement *impl);
 };
 
 struct EntityPlayer : public IEntity {
+public:
+	typedef std::shared_ptr<EntityPlayer> ptr;
+
 private:
 	std::string name;
 
 public:
-	EntityPlayer(UUID uuid, std::string name, EntityImplement* impl);
+	EntityPlayer(UUID uuid, std::string name, EntityImpl* impl);
 
 public:
 	void on_tick() override;
-
-	// will never override on_render()
-	//void on_render() override;
-
 };

@@ -27,9 +27,9 @@ struct Packet {
 		CHAT256,
 		TRANSFORM,
 		//SRC_CLIENT_UNTRUSTED_MOTION,
-		SRC_SERVER_ENTITY_NEW,
+		SRC_SERVER_PLAYER_NEW,
 		//SRC_CLIENT_REQUEST_TEAM,
-		SRC_SERVER_CLIENT_IDENTITY,
+		SRC_SERVER_PLAYER_IDENTITY,
 		count // kind of hacky
 	};
 
@@ -58,70 +58,49 @@ struct Packet {
 	struct Chat32 {
 		static constexpr Packet::Type TYPE = Packet::Type::CHAT32;
 		char message[32];
-		//char target[16] = ""; // optional 
 		UUID target;
 	};
 
 	struct Chat64 {
 		static constexpr Packet::Type TYPE = Packet::Type::CHAT64;
 		char message[64];
-		//char target[16] = ""; // optional 
 		UUID target;
 	};
 
 	struct Chat128 {
 		static constexpr Packet::Type TYPE = Packet::Type::CHAT128;
 		char message[128];
-		//char target[16] = ""; // optional 
 		UUID target;
 	};
 
 	struct Chat256 {
 		static constexpr Packet::Type TYPE = Packet::Type::CHAT256;
 		char message[256];
-		//char target[16] = ""; // optional 
 		UUID target;
 	};
 
 	// trust the client motion
 	struct Transform { //  (cheaper for server)
 		static constexpr Packet::Type TYPE = Packet::Type::TRANSFORM;
-		UUID target; // optional due to client
+		UUID target; // for server
 		float x, y;
 		float vx, vy;
 		float ax, ay;
 		float angle;
 	};
 
-	// fuck the clients motion
-	//struct UnTrustedMotion { // (expensive for server)
-	//	static constexpr Packet::Type TYPE = Packet::Type::SRC_CLIENT_UNTRUSTED_MOTION;
-	//	Input input;
-	//};
-
-	// declare the existence of a particular entity
-	struct EntityNew {
-		static constexpr Packet::Type TYPE = Packet::Type::SRC_SERVER_ENTITY_NEW;
+	// tell the client of a new player (uuid, name)
+	struct PlayerNew {
+		static constexpr Packet::Type TYPE = Packet::Type::SRC_SERVER_PLAYER_NEW;
 		UUID uuid;
-		//Entity::Type type;
 		char name[16] = "";
 	};
 
-	//struct EntityDelete {
-	//
-	//};
-
-	//struct RequestTeam {
-	//	static constexpr Packet::Type TYPE = Packet::Type::SRC_CLIENT_REQUEST_TEAM;
-	//	Entity::Type type;
-	//};
-
-	// sent by the server to inform the client on who they should be in the game
-	struct DelegateIdentity {
-		static constexpr Packet::Type TYPE = Packet::Type::SRC_SERVER_CLIENT_IDENTITY;
+	// tell the client their identity
+	struct PlayerIdentity {
+		static constexpr Packet::Type TYPE = Packet::Type::SRC_SERVER_PLAYER_IDENTITY;
 		UUID uuid;
-		char name[16] = "";
-		//Entity::Type type;
+		//char name[16] = "";
 	};
 
 	/*
@@ -162,9 +141,9 @@ struct Packet {
 		sizeof(Chat256),
 		sizeof(Transform),
 		//sizeof(UnTrustedMotion),
-		sizeof(EntityNew),
+		sizeof(PlayerNew),
 		//sizeof(RequestTeam),
-		sizeof(DelegateIdentity)
+		sizeof(PlayerIdentity)
 	};
 
 	/*

@@ -1,9 +1,9 @@
 #pragma once
 
 // server or client
-class EntityImplement {
+class EntityImpl {
 public:
-	EntityImplement();
+	EntityImpl();
 
 public:
 	//virtual void on_tick();

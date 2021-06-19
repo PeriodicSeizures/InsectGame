@@ -21,23 +21,16 @@ TCPClient::~TCPClient() {
 	stop();
 }
 
-static void shared_cout(std::string s) {
-	std::scoped_lock scoped;
-	std::cout << s;
-}
-
 void TCPClient::start() {
 	alive = true;
 	ctx_thread = std::thread([this]() {
 		_io_context.run();
-		shared_cout("after run\n");
 	});
 
 	update_thread = std::thread([this]() {
 		while (alive) {
 			on_update();
 		}
-		shared_cout("after updater\n");
 	});
 
 	render_thread = std::thread([this]() {
@@ -53,7 +46,6 @@ void TCPClient::start() {
 				do_render = true;
 			}
 		}
-		shared_cout("after renderer\n");
 	});
 
 	while (alive) {
