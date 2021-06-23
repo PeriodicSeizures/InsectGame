@@ -9,8 +9,8 @@ void PlayerList::add_player(TCPConnection::ptr connection) {
 
 	if (uuid_conn_map.size() < max_players) {
 
-		UUID &uuid = connection->uuid;
-
+		//UUID &uuid = connection->uuid;
+		UUID uuid = 0;
 		// add player 
 		auto e = std::make_shared<EntityPlayer>(uuid, "", new ServerImplPlayer());
 		
@@ -56,10 +56,10 @@ void PlayerList::save_player(UUID uuid) {
 }
 
 EntityPlayer::ptr PlayerList::get_online_player(UUID uuid) {
-	auto&& find = uuid_conn_map.find(uuid);
-	if (find != uuid_conn_map.end()) {
-		return find->second->entity;
-	}
+	//auto&& find = uuid_conn_map.find(uuid);
+	//if (find != uuid_conn_map.end()) {
+	//	return find->second->entity;
+	//}
 	return nullptr;
 }
 

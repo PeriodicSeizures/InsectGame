@@ -4,6 +4,7 @@
 #include <memory>
 #include "../Common.h"
 #include "../impl/EntityImpl.h"
+#include "../network/tcp_connection.h"
 
 class IEntity : public std::enable_shared_from_this<IEntity>
 {
@@ -36,10 +37,27 @@ public:
 
 	virtual void on_tick() = 0;
 
+	//void send_transform(TCPConnection::ptr conn); // send location
+	//virtual void send_new(TCPConnection::ptr conn) = 0; // send existence
+	//virtual void send_data(TCPConnection::ptr conn) = 0;
+
 	void set_transform(float x, float y,
 		float vx, float vy,
 		float ax, float ay,
 		float angle);
+
+	/*
+	* Return packet containing certain data
+	*/
+
+	// transform packet
+	Packet packet_transform();
+
+	// new entity packet
+	virtual Packet packet_new() = 0;
+
+	// remove entity packet
+	Packet packet_delete();
 };
 
 struct EntityPlayer : public IEntity {
@@ -54,4 +72,8 @@ public:
 
 public:
 	void on_tick() override;
+
+	Packet packet_new() override;
+
+
 };

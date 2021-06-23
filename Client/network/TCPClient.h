@@ -49,10 +49,11 @@ public:
 	/*
 	* send(...): a non blocking call to send packet to server
 	*/
+	void psend(Packet packet);
+
 	template<class T>
 	void send(T packet) {
-		if (connection && connection->is_open())
-			connection->send(std::move(packet));
+		connection->send(std::move(packet));
 	}
 
 	/*

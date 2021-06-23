@@ -20,6 +20,9 @@
 //	return preverified;
 //}
 
+//#define LOG_DEBUG_CONN(s) \
+//#ifdef DO_DEBUG_CONN LOG_DEBUG(s)
+
 TCPConnection::TCPConnection(ssl_socket socket, AsyncQueue<OwnedPacket>* in_packets_s)
 	: _socket(std::move(socket)), 
 	in_packets_s(in_packets_s), 
@@ -85,36 +88,58 @@ void TCPConnection::handshake() {
 
 	// perform ssl handshake
 	auto self(shared_from_this());
-	_socket.async_handshake(SIDE==Side::SERVER ? asio::ssl::stream_base::server :
-		asio::ssl::stream_base::client,
-		[this, self](const std::error_code& e)
-	{
-		if (!e) {
-			open = true;
-			//if (SIDE == Side::CLIENT)
-				read_header();
-			//do nothing yet
-		}
-		else {
-			std::cout << "ssl handshake error: " << e.message() << "\n";
-		}
-	});
+
+	std::error_code ec;
+	_socket.handshake(SIDE == Side::SERVER ? asio::ssl::stream_base::server :
+		asio::ssl::stream_base::client, ec);
+
+	if (!ec) {
+		open = true;
+		//if (SIDE == Side::CLIENT)
+		read_header();
+	}
+	else {
+		std::cout << "ssl handshake error: " << ec.message() << "\n";
+	}
+
+	//_socket.async_handshake(SIDE==Side::SERVER ? asio::ssl::stream_base::server :
+	//	asio::ssl::stream_base::client,
+	//	[this, self](const std::error_code& e)
+	//{
+	//	if (!e) {
+	//		open = true;
+	//		//if (SIDE == Side::CLIENT)
+	//			read_header();
+	//		//do nothing yet
+	//	}
+	//	else {
+	//		std::cout << "ssl handshake error: " << e.message() << "\n";
+	//	}
+	//});
+}
+
+void TCPConnection::psend(Packet packet) {
+	const bool was_empty = out_packets.empty();
+	out_packets.push_back(std::move(packet));
+	if (was_empty)
+		write_header();	
 }
 
 void TCPConnection::read_header() {
-	std::cout << "read_header()\n";
+	
 
 	auto self(shared_from_this());
 	asio::async_read(_socket,
 		asio::buffer(&(this->temp.type), Packet::SIZE),
 		[this, self](const std::error_code &e, size_t) {
 		if (!e) {
-			std::cout << "incoming header\n";
+			LOG_DEBUG("read_header()");
 			read_body();
 		}
 		else {
 			std::cout << "read header error: " << e.message() << "\n";
 			open = false;
+			if (SIDE == Side::SERVER) in_packets_s->notify();
 		}
 	}
 	);
@@ -134,8 +159,6 @@ void TCPConnection::read_body() {
 		//temp.data = new char[len];
 		temp.data.resize(len);
 
-		std::cout << "r1, " << len << "\n";
-
 		auto self(shared_from_this());
 		asio::async_read(_socket,
 			asio::buffer(temp.data), // len
@@ -146,12 +169,15 @@ void TCPConnection::read_body() {
 				else
 					this->in_packets_c->push_back(temp);
 
-				std::cout << "incoming body\n"; // << (uint16_t)in_packet_type << "\n";
+				LOG_DEBUG("read_body()");
+
+				//std::cout << "incoming body\n"; // << (uint16_t)in_packet_type << "\n";
 				read_header();
 			}
 			else {
 				std::cout << "read body error: " << e.message() << "\n";
 				open = false;
+				if (SIDE == Side::SERVER) in_packets_s->notify();
 			}
 		}
 		);
@@ -164,7 +190,7 @@ void TCPConnection::read_body() {
 
 void TCPConnection::write_header() {
 
-	std::cout << "write_header()\n";
+	LOG_DEBUG("write_header()");
 
 	auto self(shared_from_this());
 	asio::async_write(_socket,
@@ -177,6 +203,7 @@ void TCPConnection::write_header() {
 		else {
 			std::cout << "write header error: " << e.message() << "\n";
 			open = false;
+			if (SIDE == Side::SERVER) in_packets_s->notify();
 		}
 	}
 	);
@@ -186,7 +213,7 @@ void TCPConnection::write_body() {
 	uint16_t len = Packet::sizes[(uint16_t)out_packets.front().type];
 	
 	if (len > 0) {
-		std::cout << "w1, " << len << "\n";
+		LOG_DEBUG("write_body()");
 
 		auto self(shared_from_this());
 		asio::async_write(_socket,
@@ -194,7 +221,6 @@ void TCPConnection::write_body() {
 			[this, self](const std::error_code& e, size_t) {
 			if (!e) {
 				out_packets.pop_front();
-				std::cout << "sent something with a body\n";
 
 				if (!out_packets.empty())
 					write_header();
@@ -202,12 +228,12 @@ void TCPConnection::write_body() {
 			else {
 				std::cout << "write body error: " << e.message() << "\n";
 				open = false;
+				if (SIDE == Side::SERVER) in_packets_s->notify();
 			}
 		}
 		);
 	}
 	else {
-		std::cout << "w1\n";
 		out_packets.pop_front();
 		write_header();
 	}

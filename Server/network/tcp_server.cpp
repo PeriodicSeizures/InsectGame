@@ -62,22 +62,73 @@ void TCPServer::stop() {
 	_io_context.restart();
 }
 
+void TCPServer::psend_to(Packet packet, TCPConnection::ptr connection) {
+
+	std::cout << "send_to()\n";
+	if (connection && connection->is_open()) {
+		connection->psend(std::move(packet));
+	}
+	else {
+		// remove
+		disconnect(connection, false);
+	}	
+}
+
+void TCPServer::psend_all(Packet packet) {
+	for (auto&& conn : connections) {
+		psend_to(std::move(packet), conn);
+	}
+}
+
+void TCPServer::psend_except(Packet packet, TCPConnection::ptr connection) {
+	if (!connection) {
+		disconnect(connection, false);
+		return;
+	}
+
+	for (auto&& conn : connections) {
+		if (conn != connection)
+			psend_to(std::move(packet), conn);
+
+		//if (conn && conn != connection)
+		//	psend_to(std::move(packet), conn);
+		//else
+		//	disconnect(conn, false);
+	}
+}
+
 void TCPServer::on_update() {
 
 	in_packets.wait();
 
+	/*
+	* iterate connections, testing for a dead connection
+	*/
+	//for (auto&& it = connections.cbegin(); it != connections.cend(); ) {
+	//	if (!(*it) || !((*it)->is_open())) {
+	//		it = connections.erase(it);
+	//	}
+	//	else {
+	//		++it;
+	//	}
+	//}
+
+	/*
+	* process packets
+	*/
 	size_t limit = 20;
 	while (!in_packets.empty() && limit--) {
 		auto&& owned_packet = in_packets.pop_front();
 
 		// might have issue
-		if (!owned_packet.owner->is_open())
-			disconnect(owned_packet.owner, false);
-		else
+		//if (!owned_packet.owner->is_open())
+		//	disconnect(owned_packet.owner, false);
+		//else
 			on_packet(owned_packet.owner, std::move(owned_packet.packet));
 
 		//owned_packet.owner.reset()
 	}
+
 }
 
 bool TCPServer::is_alive() {
@@ -85,7 +136,8 @@ bool TCPServer::is_alive() {
 }
 
 void TCPServer::disconnect(TCPConnection::ptr connection, bool forced) {
-
+	std::cout << "attempt to disconnect()\n";
+	//return;
 	// kick
 	if (forced) {
 		connection->close();
@@ -93,7 +145,8 @@ void TCPServer::disconnect(TCPConnection::ptr connection, bool forced) {
 
 	// free
 	on_quit(connection);
-	connections.erase(connection);
+	//in_packets.notify();
+	//connections.erase(connection);
 }
 
 void TCPServer::do_accept()
@@ -119,10 +172,18 @@ void TCPServer::do_accept()
 					ssl_socket(std::move(socket), _ssl_context),
 					&in_packets);
 
+				// always establish connection first
+				// handshake will be blocking
+				conn->handshake();
+
 				// Whether to accept or deny the connection
 				if (on_join(conn)) {
-					conn->handshake();
+					//conn->handshake();
 					connections.insert(conn);
+					//conn->read_header();
+				}
+				else {
+
 				}
 				conn.reset();
 			}

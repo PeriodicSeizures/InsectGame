@@ -15,4 +15,16 @@ enum class Input : uint16_t {
 //	ANT, SPIDER, MILLIPEDE, SLIME_PUDDLE
 //};
 
+//#define DO_LOG_DEBUG
+
+#ifdef _DEBUG 
+	#ifdef DO_LOG_DEBUG
+	#define LOG_DEBUG(s) printf("%s\n", s);
+	#else
+	#define LOG_DEBUG(s)
+	#endif // DO_LOG_DEBUG
+#else
+#define LOG_DEBUG(s)
+#endif // _DEBUG
+
 #endif

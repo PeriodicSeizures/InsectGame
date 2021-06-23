@@ -48,42 +48,71 @@ public:
 	* send_to(...): a non blocking call to send a packet along a
 	* target connection
 	*/
+	void psend_to(Packet packet, TCPConnection::ptr connection);
+
 	template<class T>
-	void send_to(T packet, TCPConnection::ptr connection) {
-		std::cout << "send_to()\n";
-		if (connection && connection->is_open()) {
-			connection->send(std::move(packet));
-		}
-		else {
-			// remove
-			disconnect(connection, false);			
-		}
+	void send_to(T structure, TCPConnection::ptr connection) {
+		psend_to(std::move(Packet::serialize(structure)), connection);
 	}
+
+	//template<class T>
+	//void send_to(T packet, TCPConnection::ptr connection) {
+	//	std::cout << "send_to()\n";
+	//	if (connection && connection->is_open()) {
+	//		connection->send(std::move(packet));
+	//	}
+	//	else {
+	//		// remove
+	//		disconnect(connection, false);			
+	//	}
+	//}
 
 	/*
 	* send_all(...): a non blocking call to send a packet along
 	* all open connections
 	*/
+	void psend_all(Packet packet);
+
 	template<class T>
-	void send_all(T packet) {
-		for (auto&& conn : connections) {
-			send_to(std::move(packet), conn);
-		}
+	void send_all(T structure) {
+		psend_all(std::move(Packet::serialize(structure)));
 	}
+
+	//template<class T>
+	//void send_all(T packet) {
+	//	for (auto&& conn : connections) {
+	//		send_to(std::move(packet), conn);
+	//	}
+	//}
 
 	/*
 	* send_except(...): a non blocking call to send a packet along
 	* all open connections except for a specific single target 
 	* connection
 	*/
+	void psend_except(Packet packet, TCPConnection::ptr connection);
+
 	template<class T>
-	void send_except(T packet, TCPConnection::ptr connection) {
-		for (auto&& conn : connections) {
-			if (conn != connection)
-				send_to(std::move(packet), conn);
-				//conn->send(std::move(packet));
-		}
+	void send_except(T structure, TCPConnection::ptr connection) {
+		psend_except(std::move(Packet::serialize(structure)), connection);
 	}
+
+	//template<class T>
+	//void send_except(T packet, TCPConnection::ptr connection) {
+	//
+	//	if (!connection) {
+	//		disconnect(connection, false);
+	//		return;
+	//	}
+	//
+	//	for (auto&& conn : connections) {
+	//		if (conn && conn != connection)
+	//			send_to(std::move(packet), conn);
+	//		//conn->send(std::move(packet));
+	//		else
+	//			disconnect(conn, false);
+	//	}
+	//}
 
 	/*
 	* is_alive(): whether the io_context and associated thread is

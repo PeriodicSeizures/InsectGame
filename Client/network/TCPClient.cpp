@@ -70,8 +70,13 @@ void TCPClient::stop() {
 	if (update_thread.joinable())
 		update_thread.join();
 
-	if (render_thread.joinable())
+	if (render_thread.joinable()) {
+		/*
+		* if rendering is disabled, resume the cv blocking to stop block
+		*/
+		cvBlocking.notify_one();
 		render_thread.join();
+	}
 
 	_io_context.restart();
 }
@@ -91,6 +96,11 @@ void TCPClient::connect(std::string host, std::string port) {
 	
 	asio::async_connect(connection->socket().lowest_layer(), endpoints,
 		std::bind(&TCPConnection::handshake, connection));
+}
+
+void TCPClient::psend(Packet packet) {
+	if (connection && connection->is_open())
+		connection->psend(std::move(packet));
 }
 
 void TCPClient::set_render(bool a) {

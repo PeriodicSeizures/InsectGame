@@ -9,6 +9,7 @@ IEntity::IEntity(UUID uuid, EntityImpl* impl)
 IEntity::~IEntity() {
 	//assert(impl);
 	delete impl;
+	std::cout << "~IEntity()\n";
 }
 
 void IEntity::on_physics() {
@@ -93,4 +94,31 @@ void IEntity::set_transform(float x, float y,
 	this->ax = ax;
 	this->ay = ay;
 	this->angle = angle;
+}
+
+Packet IEntity::packet_transform() {
+
+	// send
+	Packet::Transform transform = { 
+		uuid, 
+		x,
+		y,
+		vx,
+		vy,
+		ax,
+		ay,
+		angle};
+
+	return Packet::serialize(std::move(transform));
+	//conn->send(std::move(transform));
+
+}
+
+Packet IEntity::packet_delete() {
+
+	Packet::PlayerDelete p = {
+		uuid
+	};
+
+	return Packet::serialize(std::move(p));
 }

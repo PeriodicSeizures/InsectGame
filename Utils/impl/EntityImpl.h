@@ -4,6 +4,7 @@
 class EntityImpl {
 public:
 	EntityImpl();
+	virtual ~EntityImpl();
 
 public:
 	//virtual void on_tick();

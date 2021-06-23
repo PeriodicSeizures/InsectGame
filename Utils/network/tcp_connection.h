@@ -6,7 +6,7 @@
 #include <unordered_map>
 #include "Packet.h"
 #include "../AsyncQueue.h"
-#include "../entity/IEntity.h" //
+//#include "../entity/IEntity.h" //
 
 #ifdef _WIN32
 #define _WIN32_WINNT 0x0A00
@@ -52,10 +52,11 @@ public:
 	* 
 	* mainly used by server 
 	*/
+
 	UUID uuid = -1;
-	std::string host;
-	uint16_t port;
-	EntityPlayer::ptr entity;
+	//std::string host;
+	//uint16_t port;
+	//EntityPlayer::ptr entity;
 
 public:
 	TCPConnection(ssl_socket, AsyncQueue<OwnedPacket>*); // server
@@ -78,21 +79,28 @@ public:
 	/*
 	* Send data along connection
 	*/
+	void psend(Packet packet);
+
 	template<class T>
-	void send(T p) {
-		//auto t = p.TYPE;
-		//auto t2 = Packet::Type::CHAT128;
-		Packet __packet = { p.TYPE };
-		//__packet.type = decltype(packet)::TYPE;
-		if (sizeof(T)) {
-			__packet.data.resize(sizeof(T));
-			std::memcpy(__packet.data.data(), (void*)&p, sizeof(T));
-		}
-		bool was_empty = out_packets.empty();
-		out_packets.push_back(std::move(__packet));
-		if (was_empty)
-			write_header();
+	void send(T structure) {
+		psend(std::move(Packet::serialize(structure)));
 	}
+
+	//template<class T>
+	//void send(T p) {
+	//	//auto t = p.TYPE;
+	//	//auto t2 = Packet::Type::CHAT128;
+	//	Packet __packet = { p.TYPE };
+	//	//__packet.type = decltype(packet)::TYPE;
+	//	if (sizeof(T)) {
+	//		__packet.data.resize(sizeof(T));
+	//		std::memcpy(__packet.data.data(), (void*)&p, sizeof(T));
+	//	}
+	//	bool was_empty = out_packets.empty();
+	//	out_packets.push_back(std::move(__packet));
+	//	if (was_empty)
+	//		write_header();
+	//}
 
 private:
 	void read_header();

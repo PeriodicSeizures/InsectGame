@@ -134,7 +134,9 @@ void Client::on_packet(Packet packet) {
 	case Packet::Type::TRANSFORM: {
 		auto t = Packet::deserialize<Packet::Transform>(packet);
 		auto&& find = entities.find(t->target);
+		std::cout << t->target << " transform \n";
 		if (find != entities.end()) {
+			
 			/*
 			* move the uuid player
 			*/
@@ -145,12 +147,23 @@ void Client::on_packet(Packet packet) {
 	case Packet::Type::SRC_SERVER_PLAYER_NEW: {
 		auto t = Packet::deserialize<Packet::PlayerNew>(packet);
 		// add to map
+		std::cout << t->uuid << " new player\n";
 		entities.insert({ t->uuid, 
 			std::make_shared<EntityPlayer>(t->uuid, t->name, new ClientImpl()) });
 		break;
 	}
+	case Packet::Type::SRC_SERVER_PLAYER_DELETE: {
+		auto t = Packet::deserialize<Packet::PlayerDelete>(packet);
+
+		// delete from entities
+		entities.erase(t->uuid);
+
+		break;
+	}
 	case Packet::Type::SRC_SERVER_PLAYER_IDENTITY: {
 		auto t = Packet::deserialize<Packet::PlayerIdentity>(packet);
+
+		std::cout << t->uuid << " id\n";
 
 		this->player->uuid = t->uuid;
 

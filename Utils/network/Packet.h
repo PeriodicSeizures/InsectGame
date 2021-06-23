@@ -5,6 +5,7 @@
 #include <string>
 #include <assert.h>
 #include <vector>
+#include <typeinfo>
 #include "../Common.h"
 
 /* * * * * * * * * * * * * * * * * * * * * * * *
@@ -28,6 +29,7 @@ struct Packet {
 		TRANSFORM,
 		//SRC_CLIENT_UNTRUSTED_MOTION,
 		SRC_SERVER_PLAYER_NEW,
+		SRC_SERVER_PLAYER_DELETE,
 		//SRC_CLIENT_REQUEST_TEAM,
 		SRC_SERVER_PLAYER_IDENTITY,
 		count // kind of hacky
@@ -96,6 +98,11 @@ struct Packet {
 		char name[16] = "";
 	};
 
+	struct PlayerDelete {
+		static constexpr Packet::Type TYPE = Packet::Type::SRC_SERVER_PLAYER_DELETE;
+		UUID uuid;
+	};
+
 	// tell the client their identity
 	struct PlayerIdentity {
 		static constexpr Packet::Type TYPE = Packet::Type::SRC_SERVER_PLAYER_IDENTITY;
@@ -123,10 +130,35 @@ struct Packet {
 	*/
 	static ErrorCode S(Type type, uint16_t &ret);
 
+	/*
+	* Turn data structure into packet
+	*/
+	template<class T>
+	static Packet serialize(T structure) {
+		
+		//static_assert()
+		// might want to include some static asserts to make
+		// compiling issues easier to debug and fix
+		// since errors like "'TYPE' is not a member of Packet" is annoying
+		// and takes time to backtrack where it's used
+
+		static_assert(!std::is_same<T, Packet>::value, "must not be a Packet type");
+
+		Packet packet = { structure.TYPE };
+		if (sizeof(T)) {
+			packet.data.resize(sizeof(T));
+			std::memcpy(packet.data.data(), (void*)&structure, sizeof(T));
+		}
+		return std::move(packet);
+	}
+
+	/*
+	* Turn Packet into data structure
+	*/
 	template<typename T>
-	static T* deserialize(Packet& in) {
+	static T* deserialize(Packet& packet) {
 		//return static_cast<T*>((void*)in.data);
-		return static_cast<T*>((void*)in.data.data());
+		return static_cast<T*>((void*)packet.data.data());
 	}
 
 
@@ -142,6 +174,7 @@ struct Packet {
 		sizeof(Transform),
 		//sizeof(UnTrustedMotion),
 		sizeof(PlayerNew),
+		sizeof(PlayerDelete),
 		//sizeof(RequestTeam),
 		sizeof(PlayerIdentity)
 	};

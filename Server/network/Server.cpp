@@ -1,6 +1,7 @@
 #include <limits>
 #include <time.h>
 #include "Server.h"
+#include "../impl/ServerImpl.h"
 
 Server* SERVER;
 
@@ -8,35 +9,24 @@ Server::Server(unsigned short port)
 	: TCPServer(port) {}
 
 Server::~Server() {
-	
+
 }
 
 UUID Server::generateUUID() {
 	/*
 	* look through map
 	*/
-	UUID uuid = 0;
-	uint64_t runs = 0; // shift by 1 per iteration
-	while (uuid_entity_map.find(uuid) != 
-		uuid_entity_map.end() && runs++ < 100) 
-	{
-		// keep generating a new uuid until it is unique
-		// uuid |= (at << 1);
-		// 32767 max
-		// map 0-32,767 across 0-18,446,744,073,709,551,616
-
-		// val of rand(), mul by 562,949,953,421,312
-
+	while (true) {
 		srand(time(NULL));
 
-		// uuid should now be mapped across entire 2^64 range
-		uuid = rand() * 
+		UUID uuid = rand() *
 			(std::numeric_limits<uint64_t>::max() / (1 << 15));
-	
-		//runs++;
-	}
 
-	return uuid;
+		if (uuid_entity_map.find(uuid) ==
+			uuid_entity_map.end())
+			return uuid;
+	}
+	return 0;
 }
 
 void Server::on_tick() {
@@ -47,21 +37,40 @@ void Server::on_tick() {
 	
 }
 
-static std::thread thr;
+//static std::thread thr;
 
 bool Server::on_join(TCPConnection::ptr connection) {
 
-	std::cout << "a player has joined\n";
+	UUID uuid = generateUUID();
+
+	std::cout << uuid << " has joined\n";
+
+	/*
+	* Send uuid to client
+	*/
+	Packet::PlayerIdentity player_id = { uuid };
+	send_to(player_id, connection);
 
 	/* 
-	* send all entities to 
+	* Send all players to client
 	*/
+	for (auto&& pair : uuid_entity_map) {
+		// send the all entities declaration to client
+		psend_to(pair.second->packet_new(), connection);
+	}
+	
+	/*
+	* Create its entity
+	*/	
+	uuid_entity_map.insert({ uuid,
+		std::make_shared<EntityPlayer>(uuid, "", new ServerImplPlayer()) });
+	connection->uuid = uuid;
 
-	thr = std::thread([this, connection]() {
-		std::this_thread::sleep_for(std::chrono::seconds(5));
-		Packet::Chat32 chat32 = {  };
-		send_to(chat32, connection);
-	});
+	/*
+	* Send player to other clients
+	*/
+	Packet::PlayerNew player_new = { uuid, "" };
+	send_except(player_new, connection);
 
 	return true;
 }
@@ -83,6 +92,7 @@ void Server::on_packet(TCPConnection::ptr owner, Packet packet) {
 		/*
 		* dereference of packet is used, not ptr
 		*/
+		t->target = owner->uuid; // do not trust client sent uuid
 		send_except(std::move(*t), owner);
 		break;
 	}
@@ -95,5 +105,12 @@ void Server::on_packet(TCPConnection::ptr owner, Packet packet) {
 }
 
 void Server::on_quit(TCPConnection::ptr connection) {
-	std::cout << "a player quit\n";
+	std::cout << connection->uuid << " has quit\n";
+
+	// send destroy to all players
+	psend_except(uuid_entity_map[connection->uuid]->packet_delete(), connection);
+
+	// remove entity from map
+	uuid_entity_map.erase(connection->uuid);
+
 }
