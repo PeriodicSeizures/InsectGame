@@ -84,7 +84,7 @@ void TCPConnection::close() {
 //	this->uuid = uuid;
 //}
 
-void TCPConnection::handshake() {
+void TCPConnection::ssl_handshake() {
 
 	// perform ssl handshake
 	auto self(shared_from_this());
@@ -126,8 +126,6 @@ void TCPConnection::psend(Packet packet) {
 }
 
 void TCPConnection::read_header() {
-	
-
 	auto self(shared_from_this());
 	asio::async_read(_socket,
 		asio::buffer(&(this->temp.type), Packet::SIZE),
@@ -139,7 +137,7 @@ void TCPConnection::read_header() {
 		else {
 			std::cout << "read header error: " << e.message() << "\n";
 			open = false;
-			if (SIDE == Side::SERVER) in_packets_s->notify();
+			//if (SIDE == Side::SERVER) in_packets_s->notify();
 		}
 	}
 	);
@@ -177,7 +175,7 @@ void TCPConnection::read_body() {
 			else {
 				std::cout << "read body error: " << e.message() << "\n";
 				open = false;
-				if (SIDE == Side::SERVER) in_packets_s->notify();
+				//if (SIDE == Side::SERVER) in_packets_s->notify();
 			}
 		}
 		);
@@ -203,7 +201,7 @@ void TCPConnection::write_header() {
 		else {
 			std::cout << "write header error: " << e.message() << "\n";
 			open = false;
-			if (SIDE == Side::SERVER) in_packets_s->notify();
+			//if (SIDE == Side::SERVER) in_packets_s->notify();
 		}
 	}
 	);
@@ -228,7 +226,7 @@ void TCPConnection::write_body() {
 			else {
 				std::cout << "write body error: " << e.message() << "\n";
 				open = false;
-				if (SIDE == Side::SERVER) in_packets_s->notify();
+				//if (SIDE == Side::SERVER) in_packets_s->notify();
 			}
 		}
 		);

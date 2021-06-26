@@ -116,7 +116,7 @@ Packet IEntity::packet_transform() {
 
 Packet IEntity::packet_delete() {
 
-	Packet::PlayerDelete p = {
+	Packet::EntityDelete p = {
 		uuid
 	};
 

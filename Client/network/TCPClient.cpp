@@ -95,7 +95,7 @@ void TCPClient::connect(std::string host, std::string port) {
 	auto endpoints = resolver.resolve(tcp::v4(), host, port);
 	
 	asio::async_connect(connection->socket().lowest_layer(), endpoints,
-		std::bind(&TCPConnection::handshake, connection));
+		std::bind(&TCPConnection::ssl_handshake, connection));
 }
 
 void TCPClient::psend(Packet packet) {

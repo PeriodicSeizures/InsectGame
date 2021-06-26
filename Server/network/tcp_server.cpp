@@ -86,6 +86,8 @@ void TCPServer::psend_except(Packet packet, TCPConnection::ptr connection) {
 		return;
 	}
 
+
+
 	for (auto&& conn : connections) {
 		if (conn != connection)
 			psend_to(std::move(packet), conn);
@@ -146,7 +148,7 @@ void TCPServer::disconnect(TCPConnection::ptr connection, bool forced) {
 	// free
 	on_quit(connection);
 	//in_packets.notify();
-	//connections.erase(connection);
+	connections.erase(connection);
 }
 
 void TCPServer::do_accept()
@@ -174,7 +176,7 @@ void TCPServer::do_accept()
 
 				// always establish connection first
 				// handshake will be blocking
-				conn->handshake();
+				conn->ssl_handshake();
 
 				// Whether to accept or deny the connection
 				if (on_join(conn)) {

@@ -18,6 +18,16 @@
 
 struct Packet {
 
+	/*
+	* Packet systems:
+	*  - template structure based
+	*      simple future development
+	*      no variable length, no special behaviour
+	*  - inheritance byte based, read and write to and from
+	*      repetitive and confusing code for read/write
+	*      variable length, and allow for special behaviour
+	*/
+
 	enum class Type : uint16_t {
 		SRC_SERVER_CONNECTION_REFUSED,
 		SRC_SERVER_CONNECTION_VERSION,	// version of server
@@ -29,7 +39,8 @@ struct Packet {
 		TRANSFORM,
 		//SRC_CLIENT_UNTRUSTED_MOTION,
 		SRC_SERVER_PLAYER_NEW,
-		SRC_SERVER_PLAYER_DELETE,
+		//SRC_SERVER_ENTITY_NEW, // explicitly declare which entity to create
+		SRC_SERVER_ENTITY_DELETE,
 		//SRC_CLIENT_REQUEST_TEAM,
 		SRC_SERVER_PLAYER_IDENTITY,
 		count // kind of hacky
@@ -43,12 +54,13 @@ struct Packet {
 
 	struct ConnectionRefused {
 		static constexpr Packet::Type TYPE = Packet::Type::SRC_SERVER_CONNECTION_REFUSED;
-		char message[16];
+		char message[32];
 	};
 
 	struct ConnectionVersion {
 		static constexpr Packet::Type TYPE = Packet::Type::SRC_SERVER_CONNECTION_VERSION;
-		char message[16];
+		char message[8]; // 1.80.02\0
+
 	};
 
 	struct ConnectionLogin {
@@ -60,46 +72,54 @@ struct Packet {
 	struct Chat32 {
 		static constexpr Packet::Type TYPE = Packet::Type::CHAT32;
 		char message[32];
-		UUID target;
+		UUID uuid;
 	};
 
 	struct Chat64 {
 		static constexpr Packet::Type TYPE = Packet::Type::CHAT64;
 		char message[64];
-		UUID target;
+		UUID uuid; // to or from
 	};
 
-	struct Chat128 {
-		static constexpr Packet::Type TYPE = Packet::Type::CHAT128;
-		char message[128];
-		UUID target;
-	};
-
-	struct Chat256 {
-		static constexpr Packet::Type TYPE = Packet::Type::CHAT256;
-		char message[256];
-		UUID target;
-	};
-
-	// trust the client motion
 	struct Transform { //  (cheaper for server)
 		static constexpr Packet::Type TYPE = Packet::Type::TRANSFORM;
-		UUID target; // for server
+		UUID uuid; // for server
 		float x, y;
 		float vx, vy;
 		float ax, ay;
 		float angle;
 	};
-
+	/*
+	* metadata should be somehow organized and have variable length
+	* but, how?
+	* stl structures with templates should be good enough to
+	* get size and data, depends
+	* packet structs arent variable sized because of simplicity of
+	* needing only 1 struct and no complicated, error prone across client and server
+	* 
+	* a rewritten manual packet system would allow for full control over packet lwngth,
+	* and for special exceptions, such as var lwngth metadata depending on a type.
+	* how to organize it?
+	* 
+	* packets that are 
+	*/
 	// tell the client of a new player (uuid, name)
+	//struct EntityNew {
+	//	static constexpr Packet::Type TYPE = Packet::Type::SRC_SERVER_ENTITY_NEW;
+	//	UUID uuid;
+	//	Entity::Type type;
+	//	char meta[128];
+	//	//char name[16] = "";
+	//};
+
 	struct PlayerNew {
 		static constexpr Packet::Type TYPE = Packet::Type::SRC_SERVER_PLAYER_NEW;
 		UUID uuid;
 		char name[16] = "";
 	};
 
-	struct PlayerDelete {
-		static constexpr Packet::Type TYPE = Packet::Type::SRC_SERVER_PLAYER_DELETE;
+	struct EntityDelete {
+		static constexpr Packet::Type TYPE = Packet::Type::SRC_SERVER_ENTITY_DELETE;
 		UUID uuid;
 	};
 
@@ -169,12 +189,10 @@ struct Packet {
 		sizeof(ConnectionLogin),
 		sizeof(Chat32),
 		sizeof(Chat64),
-		sizeof(Chat128),
-		sizeof(Chat256),
 		sizeof(Transform),
 		//sizeof(UnTrustedMotion),
 		sizeof(PlayerNew),
-		sizeof(PlayerDelete),
+		sizeof(EntityDelete),
 		//sizeof(RequestTeam),
 		sizeof(PlayerIdentity)
 	};

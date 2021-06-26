@@ -133,8 +133,8 @@ void Client::on_packet(Packet packet) {
 	switch (packet.type) {
 	case Packet::Type::TRANSFORM: {
 		auto t = Packet::deserialize<Packet::Transform>(packet);
-		auto&& find = entities.find(t->target);
-		std::cout << t->target << " transform \n";
+		auto&& find = entities.find(t->uuid);
+		std::cout << t->uuid << " transform \n";
 		if (find != entities.end()) {
 			
 			/*
@@ -152,8 +152,8 @@ void Client::on_packet(Packet packet) {
 			std::make_shared<EntityPlayer>(t->uuid, t->name, new ClientImpl()) });
 		break;
 	}
-	case Packet::Type::SRC_SERVER_PLAYER_DELETE: {
-		auto t = Packet::deserialize<Packet::PlayerDelete>(packet);
+	case Packet::Type::SRC_SERVER_ENTITY_DELETE: {
+		auto t = Packet::deserialize<Packet::EntityDelete>(packet);
 
 		// delete from entities
 		entities.erase(t->uuid);

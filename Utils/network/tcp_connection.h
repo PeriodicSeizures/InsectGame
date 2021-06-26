@@ -74,7 +74,7 @@ public:
 	/*
 	* Begin async readers and writers
 	*/
-	void handshake();
+	void ssl_handshake();
 
 	/*
 	* Send data along connection

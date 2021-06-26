@@ -6,6 +6,15 @@
 #include "../impl/EntityImpl.h"
 #include "../network/tcp_connection.h"
 
+namespace Entity {
+
+	enum class Type {
+		PLAYER,
+		MISC
+	};
+
+};
+
 class IEntity : public std::enable_shared_from_this<IEntity>
 {
 public:

@@ -41,15 +41,15 @@ void Server::on_tick() {
 
 bool Server::on_join(TCPConnection::ptr connection) {
 
-	UUID uuid = generateUUID();
+	const UUID uuid = generateUUID();
+	connection->uuid = uuid;
 
 	std::cout << uuid << " has joined\n";
 
 	/*
 	* Send uuid to client
 	*/
-	Packet::PlayerIdentity player_id = { uuid };
-	send_to(player_id, connection);
+	send_to(Packet::PlayerIdentity{ uuid }, connection);
 
 	/* 
 	* Send all players to client
@@ -62,15 +62,13 @@ bool Server::on_join(TCPConnection::ptr connection) {
 	/*
 	* Create its entity
 	*/	
-	uuid_entity_map.insert({ uuid,
-		std::make_shared<EntityPlayer>(uuid, "", new ServerImplPlayer()) });
-	connection->uuid = uuid;
+	EntityPlayer::ptr entity = std::make_shared<EntityPlayer>(uuid, "", new ServerImplPlayer());
+	uuid_entity_map.insert({ uuid, entity });
 
 	/*
 	* Send player to other clients
 	*/
-	Packet::PlayerNew player_new = { uuid, "" };
-	send_except(player_new, connection);
+	psend_except(entity->packet_new(), connection);
 
 	return true;
 }
@@ -92,7 +90,7 @@ void Server::on_packet(TCPConnection::ptr owner, Packet packet) {
 		/*
 		* dereference of packet is used, not ptr
 		*/
-		t->target = owner->uuid; // do not trust client sent uuid
+		t->uuid = owner->uuid; // do not trust client sent uuid
 		send_except(std::move(*t), owner);
 		break;
 	}
