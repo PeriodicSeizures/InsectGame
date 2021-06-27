@@ -22,35 +22,69 @@ TCPClient::~TCPClient() {
 }
 
 void TCPClient::start() {
+
+	if (alive)
+		return;
+
 	alive = true;
 	ctx_thread = std::thread([this]() {
 		_io_context.run();
 	});
 
-	update_thread = std::thread([this]() {
+	alive_ticker_thread = std::thread([this]() {
 		while (alive) {
-			on_update();
+			cv.notify_one();
+			// 50ms = 20tps
+			// 16.6 ms = 60tps
+			precise_sleep(.01667);
+			//std::this_thread::sleep_for(std::chrono::microseconds(1666));
 		}
 	});
 
-	render_thread = std::thread([this]() {
-		while (alive) {
-			if (do_render) {
-				//std::this_thread::sleep_for(std::chrono::milliseconds(10));
-				on_render();
-			}
-			else {
-				// freeze
-				std::unique_lock<std::mutex> ul(muxBlocking);
-				cvBlocking.wait(ul);
-				do_render = true;
-			}
-		}
-	});
+	std::chrono::steady_clock::time_point last_tick = std::chrono::steady_clock::now();
+	std::chrono::steady_clock::time_point last_render = std::chrono::steady_clock::now();
 
 	while (alive) {
-		on_tick();
-		std::this_thread::sleep_for(std::chrono::milliseconds(50));
+		std::unique_lock<std::mutex> ul(mux);
+		cv.wait(ul);
+
+		const auto now = std::chrono::steady_clock::now();
+
+		/*
+		* Tick every 50ms, strictly
+		*/
+		auto ticks_elapsed = std::chrono::duration_cast<std::chrono::microseconds>(now - last_tick).count();
+		if (ticks_elapsed > 5000) {
+			// tick
+			on_tick();
+
+			/*
+			* Always attempt to process packets every tick
+			* condition variable should be activated when packet received
+			* but is not crucial
+			*/
+			size_t limit = 5;
+			while (!in_packets.empty() && limit--) {
+				auto&& packet = in_packets.pop_front();
+
+				on_packet(std::move(packet));
+			}
+
+			last_tick = std::chrono::steady_clock::now();
+		}
+
+
+
+		/*
+		* Render every 16.6ms, strictly
+		*/
+		auto renders_elapsed = std::chrono::duration_cast<std::chrono::microseconds>(now - last_render).count();
+		if (renders_elapsed > 1666 && do_render) {
+			// render and reset
+			on_render();
+			last_render = std::chrono::steady_clock::now();
+		}
+
 	}
 
 }
@@ -60,22 +94,19 @@ void TCPClient::stop() {
 		return;
 
 	alive = false;
+	do_render = false;
 	_io_context.stop();
 
 	if (ctx_thread.joinable())
 		ctx_thread.join();
 
-	in_packets.notify();
+	cv.notify_one();
 
-	if (update_thread.joinable())
-		update_thread.join();
-
-	if (render_thread.joinable()) {
+	if (alive_ticker_thread.joinable()) {
 		/*
 		* if rendering is disabled, resume the cv blocking to stop block
 		*/
-		cvBlocking.notify_one();
-		render_thread.join();
+		alive_ticker_thread.join();
 	}
 
 	_io_context.restart();
@@ -104,19 +135,6 @@ void TCPClient::psend(Packet packet) {
 }
 
 void TCPClient::set_render(bool a) {
-	do_render = a;
-	cvBlocking.notify_one();
-}
-
-void TCPClient::on_update() {
-	// process incoming packets
-	in_packets.wait();
-
-	size_t limit = 5;
-	while (!in_packets.empty() && limit--) {
-		auto&& packet = in_packets.pop_front();
-
-		on_packet(std::move(packet));
-	}
-
+	if (alive)
+		do_render = a;
 }

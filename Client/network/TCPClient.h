@@ -2,6 +2,7 @@
 #define TCPCLIENT_H
 
 #include "network/tcp_connection.h"
+
 class TCPClient
 {
 private:
@@ -10,8 +11,7 @@ private:
 	asio::ssl::context _ssl_context;
 	
 	std::thread ctx_thread;
-	std::thread update_thread;
-	std::thread render_thread;
+	std::thread alive_ticker_thread;
 
 	AsyncQueue<Packet> in_packets;
 
@@ -21,8 +21,8 @@ private:
 
 	// for rendering
 	std::atomic_bool do_render = true;
-	std::condition_variable cvBlocking;
-	std::mutex muxBlocking;
+	std::condition_variable cv;
+	std::mutex mux;
 
 public:
 	TCPClient();
@@ -62,8 +62,6 @@ public:
 	void set_render(bool a);
 
 private:
-	void on_update();
-
 	virtual void on_tick() = 0;
 	virtual void on_render() = 0;
 

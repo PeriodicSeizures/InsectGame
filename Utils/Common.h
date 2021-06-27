@@ -17,6 +17,8 @@ enum class Input : uint16_t {
 
 //#define DO_LOG_DEBUG
 
+void precise_sleep(double seconds);
+
 #ifdef _DEBUG 
 	#ifdef DO_LOG_DEBUG
 	#define LOG_DEBUG(s) printf("%s\n", s);

@@ -119,7 +119,9 @@ namespace Engine {
 	void init() {
         SDL_CreateWindowAndRenderer(800, 600, 
             SDL_WINDOW_SHOWN 
-            | SDL_RENDERER_PRESENTVSYNC
+            //| SDL_RENDERER_PRESENTVSYNC
+            // do not use vsync, due to renderer and ticker 
+            // being in same threads
             | SDL_RENDERER_ACCELERATED, 
             &sdl_window, &sdl_renderer);
 
