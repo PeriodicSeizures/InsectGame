@@ -21,6 +21,11 @@ enum class Side {
 	CLIENT, SERVER
 };
 
+//num class QuitStatus {
+//	UNEXPECTED, 
+//
+//;
+
 typedef asio::ssl::stream<tcp::socket> ssl_socket;
 struct OwnedPacket;
 
