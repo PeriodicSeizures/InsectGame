@@ -138,45 +138,4 @@ void Client::auth_listener(Packet packet) {
 
 void Client::game_listener(Packet packet) {
 	// what to do when a packet is received
-	switch (packet.type) {
-	case Packet::Type::SRC_SERVER_TRANSFORM: {
-		auto t = Packet::deserialize<Packet::ServerTransform>(packet);
-		auto&& find = uuid_entity_map.find(t->uuid);
-		std::cout << t->uuid << " transform \n";
-		if (find != uuid_entity_map.end()) {
-			
-			/*
-			* move the uuid player
-			*/
-			find->second->set_transform(t->x, t->y, t->vx, t->vy, t->ax, t->ay, t->angle);
-		}
-		break;
-	}
-	case Packet::Type::SRC_SERVER_PLAYER_NEW: {
-		auto t = Packet::deserialize<Packet::PlayerNew>(packet);
-		// add to map
-		std::cout << t->uuid << " new player\n";
-		uuid_entity_map.insert({ t->uuid, 
-			std::make_shared<EntityPlayer>(t->uuid, t->name, new ClientImpl()) });
-		break;
-	}
-	case Packet::Type::SRC_SERVER_ENTITY_DELETE: {
-		auto t = Packet::deserialize<Packet::EntityDelete>(packet);
-
-		// delete from entities
-		uuid_entity_map.erase(t->uuid);
-
-		break;
-	}
-	case Packet::Type::SRC_SERVER_PLAYER_IDENTITY: {
-		auto t = Packet::deserialize<Packet::PlayerIdentity>(packet);
-
-		std::cout << t->uuid << " id\n";
-
-		this->player->uuid = t->uuid;
-
-		break;
-	}
-
-	}
 }

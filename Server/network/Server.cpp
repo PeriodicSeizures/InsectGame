@@ -49,66 +49,11 @@ bool Server::on_join(TCPConnection::ptr connection) {
 
 	std::cout << uuid << " has joined\n";
 
-	/*
-	* Send uuid to client
-	*/
-	send_to(Packet::PlayerIdentity{ uuid }, connection);
-
-	/* 
-	* Send all players to client
-	*/
-	for (auto&& pair : uuid_entity_map) {
-		// send the all entities declaration to client
-		psend_to(pair.second->packet_new(), connection);
-	}
-	
-	/*
-	* Create its entity
-	*/	
-	EntityPlayer::ptr entity = std::make_shared<EntityPlayer>(uuid, "", new ServerImplPlayer());
-	uuid_entity_map.insert({ uuid, entity });
-
-	/*
-	* Send player to other clients
-	*/
-	psend_all(entity->packet_new(), connection);
-
 	return true;
 }
 
 void Server::on_packet(TCPConnection::ptr owner, Packet packet) {
 
-	std::cout << "on_packet()\n";
-
-	switch (packet.type) {
-	case Packet::Type::SRC_CLIENT_INPUT: {
-		// update the entities data
-
-		auto t = Packet::deserialize<Packet::ClientInput>(packet);
-
-		//t->target = owner->uuid;
-		//this->playerList.get_online_player()
-		//t->target = 0;
-
-		////uuid_entity_map[owner->uuid]->set_transform(
-		////	t->x, t->y,
-		////	t->vx, t->vy,
-		////	t->ax, t->ay,
-		////	t->angle);
-
-		/*
-		* dereference of packet is used, not ptr
-		*/
-		//t->uuid = owner->uuid; // do not trust client sent uuid
-		//send_except(std::move(*t), owner);
-		break;
-	}
-	//case Packet::Type::CHAT32: {
-	//	auto t = Packet::deserialize<Packet::Chat32>(packet);
-	//	
-	//	std::cout << "chat: " << t->message << "\n";
-	//}
-	}
 }
 
 void Server::on_quit(TCPConnection::ptr connection) {
