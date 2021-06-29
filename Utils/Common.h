@@ -22,7 +22,7 @@ enum class Input : uint16_t {
 //	ANT, SPIDER, MILLIPEDE, SLIME_PUDDLE
 //};
 
-//#define DO_LOG_DEBUG
+#define DO_LOG_DEBUG
 
 void precise_sleep(double seconds);
 
