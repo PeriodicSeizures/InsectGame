@@ -75,7 +75,9 @@ void TCPConnection::ssl_handshake() {
 		open = true;
 		//if (SIDE == Side::CLIENT)
 		read_header();
-		pinger();
+
+		//if (SIDE == Side::CLIENT)
+			pinger();
 	}
 	else {
 		std::cout << "ssl handshake error: " << ec.message() << "\n";
@@ -114,6 +116,7 @@ void TCPConnection::pinger() {
 		// start pinger
 		while (open) {
 			// immediately send a ping
+			std::cout << "ping\n";
 			send(Packet::Ping{});
 			waiting_pong = true;
 
@@ -125,6 +128,7 @@ void TCPConnection::pinger() {
 			if (waiting_pong) {
 				// destroy connection and break
 				// this assumes that the connection has abruptly stopped responding
+				std::cout << "no pong received\n";
 				close();
 				break;
 			}
@@ -146,19 +150,25 @@ void TCPConnection::read_header() {
 
 			// always respond to a ping with a 'pong'
 			if (temp.type == Packet::Type::PING) {
+				std::cout << "pong!\n";
 				send(Packet::Pong{});
-				read_header();
+				//read_header();
 			} // if an expected pong is received, measure the duration
-			else if (temp.type == Packet::Type::PONG && waiting_pong) {
-				// toggle wait
-				waiting_pong = false;
-				auto now = std::chrono::steady_clock::now();
-				latency_ms = std::chrono::duration_cast<std::chrono::milliseconds>(now - last_ping).count();
-				read_header();
+			else if (temp.type == Packet::Type::PONG) {
+				if (waiting_pong) {
+					// toggle wait
+					waiting_pong = false;
+					auto now = std::chrono::steady_clock::now();
+					latency_ms = std::chrono::duration_cast<std::chrono::milliseconds>(now - last_ping).count();
+					//read_header();
+				}
+				else {
+
+				}
+				//read_header();
 			}
-			else {
-				read_body();
-			}
+			read_body();
+			
 
 				
 
