@@ -70,34 +70,70 @@ void TCPServer::psend_to(Packet packet, TCPConnection::ptr connection) {
 	}
 	else {
 		// remove
-		disconnect(connection, false);
+		//disconnect(connection);
+
+		// event
+		on_quit(connection);
+
+		//nullify the local instance to have to living reference
+		connection.reset();
+
+		// 'connection' still refers to the deque (in this case set)
+		// remove the instance of connection from connections
+		connections.erase(connection);
 	}	
 }
 
-void TCPServer::psend_all(Packet packet) {
-	for (auto&& conn : connections) {
-		psend_to(std::move(packet), conn);
+void TCPServer::psend_all(Packet packet, TCPConnection::ptr except) {
+
+	// use std iterator to remove and increment
+	for (auto it = connections.begin(); it != connections.end(); ) {
+
+		TCPConnection::ptr conn = *it;
+
+		if (conn && conn->is_open()) {
+			// send
+			if (*it != except)
+				conn->psend(std::move(packet));
+
+				//psend_to(std::move(packet), *it);
+			++it;
+		}
+		else {
+			// event
+			on_quit(conn);
+
+			// free instance
+			//(*it).reset();
+
+			conn.reset();
+
+			// delete and reassign
+			it = connections.erase(it);
+		}
 	}
+
 }
 
-void TCPServer::psend_except(Packet packet, TCPConnection::ptr connection) {
-	if (!connection) {
-		disconnect(connection, false);
-		return;
-	}
-
-
-
-	for (auto&& conn : connections) {
-		if (conn != connection)
-			psend_to(std::move(packet), conn);
-
-		//if (conn && conn != connection)
-		//	psend_to(std::move(packet), conn);
-		//else
-		//	disconnect(conn, false);
-	}
-}
+//void TCPServer::psend_except(Packet packet, TCPConnection::ptr connection) {
+//	if (!connection) {
+//		//disconnect(connection);
+//		return;
+//	}
+//
+//
+//
+//	for (auto&& conn : connections) {
+//		if (conn != connection)
+//			conn->psend(std::move(packet));
+//			//psend_to(std::move(packet), conn);
+//
+//		//if (conn && conn != connection)
+//		//	psend_to(std::move(packet), conn);
+//		//else
+//		//	disconnect(conn, false);
+//	}
+//}
 
 void TCPServer::on_update() {
 
@@ -137,19 +173,18 @@ bool TCPServer::is_alive() {
 	return alive;
 }
 
-void TCPServer::disconnect(TCPConnection::ptr connection, bool forced) {
-	std::cout << "attempt to disconnect()\n";
-	//return;
-	// kick
-	if (forced) {
-		connection->close();
-	}
-
-	// free
-	on_quit(connection);
-	//in_packets.notify();
-	connections.erase(connection);
-}
+//void TCPServer::disconnect(TCPConnection::ptr connection) {
+//	std::cout << "attempt to disconnect()\n";
+//
+//	if (connection->is_open()) {
+//		connection->close();
+//	}
+//
+//	// free
+//	on_quit(connection);
+//	//in_packets.notify();
+//	connections.erase(connection);
+//}
 
 void TCPServer::do_accept()
 {

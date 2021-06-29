@@ -67,7 +67,11 @@ void TCPClient::start() {
 			while (!in_packets.empty() && limit--) {
 				auto&& packet = in_packets.pop_front();
 
-				on_packet(std::move(packet));
+				//on_packet(std::move(packet));
+
+				assert(listener, "packet listener hasnt been assigned");
+
+				listener(packet);
 			}
 
 			last_tick = std::chrono::steady_clock::now();
@@ -84,6 +88,7 @@ void TCPClient::start() {
 			on_render();
 			last_render = std::chrono::steady_clock::now();
 		}
+
 
 	}
 
@@ -138,3 +143,11 @@ void TCPClient::set_render(bool a) {
 	if (alive)
 		do_render = a;
 }
+
+void TCPClient::register_listener(std::function<void(Packet)> f) {
+	listener = f;
+}
+
+//void TCPClient::register_listener(void (*fn)(Packet)) {
+//	listener = fn;
+//}

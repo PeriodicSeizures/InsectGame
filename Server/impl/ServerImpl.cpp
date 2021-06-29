@@ -3,10 +3,10 @@
 
 ServerImpl::ServerImpl() {}
 
-void ServerImpl::behaviour(IEntity* entity) {
+void ServerImpl::behaviour(IEntity::ptr entity) {
 	if (entity->ax_prev != entity->ax || 
 		entity->ay_prev != entity->ay) {
-		Packet::Transform transform = { 
+		Packet::ServerTransform transform = { 
 			entity->uuid, 
 			entity->x, 
 			entity->y, 

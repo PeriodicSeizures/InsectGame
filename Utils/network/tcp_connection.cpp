@@ -97,6 +97,7 @@ void TCPConnection::ssl_handshake() {
 		open = true;
 		//if (SIDE == Side::CLIENT)
 		read_header();
+		pinger();
 	}
 	else {
 		std::cout << "ssl handshake error: " << ec.message() << "\n";
@@ -125,6 +126,38 @@ void TCPConnection::psend(Packet packet) {
 		write_header();	
 }
 
+long long TCPConnection::latency() {
+	return latency_ms;
+}
+
+void TCPConnection::pinger() {
+	// start a tbread to ping every period_ms ms
+	asio::post([this]() {
+		// start pinger
+		while (open) {
+			// immediately send a ping
+			send(Packet::Ping{});
+			waiting_pong = true;
+
+			// if the other fails to respond in 5 seconds, destroy connection
+			std::this_thread::sleep_for(std::chrono::milliseconds(5000));
+
+			// ping must have been received and updated by then
+			// aka if still waiting for pong
+			if (waiting_pong) {
+				// destroy connection and break
+				// this assumes that the connection has abruptly stopped responding
+				close();
+				break;
+			}
+			else {
+				// send another pong, 
+				// aka do nothing as this loops
+			}
+		}
+	});
+}
+
 void TCPConnection::read_header() {
 	auto self(shared_from_this());
 	asio::async_read(_socket,
@@ -132,6 +165,20 @@ void TCPConnection::read_header() {
 		[this, self](const std::error_code &e, size_t) {
 		if (!e) {
 			LOG_DEBUG("read_header()");
+
+			// always respond to a ping with a 'pong'
+			if (temp.type == Packet::Type::PING) {
+				send(Packet::Pong{});
+			} // if an expected pong is received, measure the duration
+			else if (temp.type == Packet::Type::PONG && waiting_pong) {
+				// toggle wait
+				waiting_pong = false;
+				auto now = std::chrono::steady_clock::now();
+				latency_ms = std::chrono::duration_cast<std::chrono::milliseconds>(now - last_ping).count();
+			}
+
+				
+
 			read_body();
 		}
 		else {
@@ -196,6 +243,8 @@ void TCPConnection::write_header() {
 
 		[this, self](const std::error_code& e, size_t) {
 		if (!e) {
+			//if (out_packets.front().type == )
+
 			write_body();
 		}
 		else {
@@ -236,3 +285,9 @@ void TCPConnection::write_body() {
 		write_header();
 	}
 }
+
+//void TCPConnection::begin_measures() {
+//	// write pings
+//
+//	send(Packet::Ping{});
+//}

@@ -44,6 +44,11 @@ private:
 	AsyncQueue<OwnedPacket> *in_packets_s;
 	AsyncQueue<Packet> *in_packets_c;
 
+	long long period_ms;
+	std::atomic_llong latency_ms;
+	bool waiting_pong;
+	std::chrono::steady_clock::time_point last_ping;
+
 	//uint16_t in_rate; // count avg packets per second
 
 public:
@@ -86,28 +91,20 @@ public:
 		psend(std::move(Packet::serialize(structure)));
 	}
 
-	//template<class T>
-	//void send(T p) {
-	//	//auto t = p.TYPE;
-	//	//auto t2 = Packet::Type::CHAT128;
-	//	Packet __packet = { p.TYPE };
-	//	//__packet.type = decltype(packet)::TYPE;
-	//	if (sizeof(T)) {
-	//		__packet.data.resize(sizeof(T));
-	//		std::memcpy(__packet.data.data(), (void*)&p, sizeof(T));
-	//	}
-	//	bool was_empty = out_packets.empty();
-	//	out_packets.push_back(std::move(__packet));
-	//	if (was_empty)
-	//		write_header();
-	//}
+	long long latency();
 
 private:
+	void pinger();
+
 	void read_header();
 	void read_body();
 
 	void write_header();
 	void write_body();
+
+	//void begin_measures();
+	//void write_ping();
+	//void write_pong();
 };
 
 struct OwnedPacket {

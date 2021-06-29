@@ -55,63 +55,27 @@ public:
 		psend_to(std::move(Packet::serialize(structure)), connection);
 	}
 
-	//template<class T>
-	//void send_to(T packet, TCPConnection::ptr connection) {
-	//	std::cout << "send_to()\n";
-	//	if (connection && connection->is_open()) {
-	//		connection->send(std::move(packet));
-	//	}
-	//	else {
-	//		// remove
-	//		disconnect(connection, false);			
-	//	}
-	//}
-
 	/*
 	* send_all(...): a non blocking call to send a packet along
 	* all open connections
 	*/
-	void psend_all(Packet packet);
+	void psend_all(Packet packet, TCPConnection::ptr except = nullptr);
 
 	template<class T>
-	void send_all(T structure) {
-		psend_all(std::move(Packet::serialize(structure)));
+	void send_all(T structure, TCPConnection::ptr except = nullptr) {
+		psend_all(std::move(Packet::serialize(structure)), except);
 	}
-
-	//template<class T>
-	//void send_all(T packet) {
-	//	for (auto&& conn : connections) {
-	//		send_to(std::move(packet), conn);
-	//	}
-	//}
 
 	/*
 	* send_except(...): a non blocking call to send a packet along
 	* all open connections except for a specific single target 
 	* connection
 	*/
-	void psend_except(Packet packet, TCPConnection::ptr connection);
-
-	template<class T>
-	void send_except(T structure, TCPConnection::ptr connection) {
-		psend_except(std::move(Packet::serialize(structure)), connection);
-	}
-
+	//void psend_except(Packet packet, TCPConnection::ptr connection);
+	//
 	//template<class T>
-	//void send_except(T packet, TCPConnection::ptr connection) {
-	//
-	//	if (!connection) {
-	//		disconnect(connection, false);
-	//		return;
-	//	}
-	//
-	//	for (auto&& conn : connections) {
-	//		if (conn && conn != connection)
-	//			send_to(std::move(packet), conn);
-	//		//conn->send(std::move(packet));
-	//		else
-	//			disconnect(conn, false);
-	//	}
+	//void send_except(T structure, TCPConnection::ptr connection) {
+	//	psend_except(std::move(Packet::serialize(structure)), connection);
 	//}
 
 	/*
@@ -121,16 +85,9 @@ public:
 	bool is_alive();
 
 	/*
-	* generateUUID(): generate a random uuid that is unique in
+	* disconnect(...): sever and cleanup a connection
 	*/
-	//UUID generateUUID();
-
-	/*
-	* disconnect(...): disconnect a connection, either forcefully or peacefully
-	*	- forced: kick / free
-	*	- !forced: free
-	*/
-	void disconnect(TCPConnection::ptr connection, bool forced);
+	//void disconnect(TCPConnection::ptr connection);
 
 private:
 	/*

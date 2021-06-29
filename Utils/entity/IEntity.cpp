@@ -55,6 +55,8 @@ void IEntity::on_physics() {
 	x += vx * 0.05f; // increment the position in tick
 	y += vy * 0.05f;
 
+	force_moved = false;
+
 	// velocity and position are predictable
 	// but accelerations can happen at any moment
 	// due to player input
@@ -94,12 +96,15 @@ void IEntity::set_transform(float x, float y,
 	this->ax = ax;
 	this->ay = ay;
 	this->angle = angle;
+
+	force_moved = true;
 }
 
 Packet IEntity::packet_transform() {
 
 	// send
-	Packet::Transform transform = { 
+	Packet::ServerTransform transform = { 
+		0,
 		uuid, 
 		x,
 		y,

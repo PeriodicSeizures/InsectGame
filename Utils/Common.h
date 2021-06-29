@@ -6,9 +6,16 @@
 typedef size_t UUID;
 
 enum class Input : uint16_t {
-	PRESS_UP, PRESS_RIGHT, PRESS_DOWN, PRESS_LEFT,
-	RELEASE_UP, RELEASE_RIGHT, RELEASE_DOWN, RELEASE_LEFT,
-	SHOOT
+	PRESS_UP = 0b1, 
+	PRESS_RIGHT = 0b10, 
+	PRESS_DOWN = 0b100, 
+	PRESS_LEFT = 0b1000,
+	RELEASE_UP = 0b10000, 
+	
+	RELEASE_RIGHT = 0b100000, 
+	RELEASE_DOWN = 0b1000000, 
+	RELEASE_LEFT = 0b10000000,
+	SHOOT = 0b100000000
 };
 
 //enum class EntityType : uint16_t {
@@ -18,6 +25,11 @@ enum class Input : uint16_t {
 //#define DO_LOG_DEBUG
 
 void precise_sleep(double seconds);
+
+//enum class AuthOrder {
+//	VERIFY_COMMON,
+//
+//};
 
 #ifdef _DEBUG 
 	#ifdef DO_LOG_DEBUG

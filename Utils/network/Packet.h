@@ -29,14 +29,16 @@ struct Packet {
 	*/
 
 	enum class Type : uint16_t {
+		PING,
+		PONG,
 		SRC_SERVER_CONNECTION_REFUSED,
 		SRC_SERVER_CONNECTION_VERSION,	// version of server
 		SRC_CLIENT_CONNECTION_LOGIN,	// identity of client
 		CHAT32,		// sent by client to server
 		CHAT64,
-		CHAT128,
-		CHAT256,
-		TRANSFORM,
+		//SRC_CLIENT_TRANSFORM,
+		SRC_SERVER_TRANSFORM,
+		SRC_CLIENT_INPUT,
 		//SRC_CLIENT_UNTRUSTED_MOTION,
 		SRC_SERVER_PLAYER_NEW,
 		//SRC_SERVER_ENTITY_NEW, // explicitly declare which entity to create
@@ -51,6 +53,14 @@ struct Packet {
 	* Packet declarations
 	* 
 	*/
+
+	struct Ping {
+		static constexpr Packet::Type TYPE = Packet::Type::PING;
+	};
+
+	struct Pong {
+		static constexpr Packet::Type TYPE = Packet::Type::PONG;
+	};
 
 	struct ConnectionRefused {
 		static constexpr Packet::Type TYPE = Packet::Type::SRC_SERVER_CONNECTION_REFUSED;
@@ -81,14 +91,26 @@ struct Packet {
 		UUID uuid; // to or from
 	};
 
-	struct Transform { //  (cheaper for server)
-		static constexpr Packet::Type TYPE = Packet::Type::TRANSFORM;
+	struct ServerTransform { //  (cheaper for server)
+		static constexpr Packet::Type TYPE = Packet::Type::SRC_SERVER_TRANSFORM;
+		uint32_t seq;
 		UUID uuid; // for server
 		float x, y;
 		float vx, vy;
 		float ax, ay;
 		float angle;
 	};
+
+	struct ClientInput { //  (cheaper for server)
+		static constexpr Packet::Type TYPE = Packet::Type::SRC_CLIENT_INPUT;
+		uint32_t seq;
+		Input input;
+	};
+
+	//struct Input {
+	//	static constexpr Packet::Type TYPE = Packet::Type::SRC_CLIENT_INPUT;
+	//};
+
 	/*
 	* metadata should be somehow organized and have variable length
 	* but, how?
@@ -184,12 +206,16 @@ struct Packet {
 
 
 	static constexpr size_t sizes[] = {
+		sizeof(Ping),
+		sizeof(Pong),
 		sizeof(ConnectionRefused),
 		sizeof(ConnectionVersion),
 		sizeof(ConnectionLogin),
 		sizeof(Chat32),
 		sizeof(Chat64),
-		sizeof(Transform),
+		sizeof(ServerTransform),
+		sizeof(ClientInput),
+		//sizeof(Input),
 		//sizeof(UnTrustedMotion),
 		sizeof(PlayerNew),
 		sizeof(EntityDelete),

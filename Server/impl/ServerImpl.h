@@ -10,7 +10,7 @@ public:
 	ServerImpl();
 
 public:
-	virtual void behaviour(IEntity *entity);
+	virtual void behaviour(IEntity::ptr entity);
 };
 
 class ServerImplPlayer : public ServerImpl {

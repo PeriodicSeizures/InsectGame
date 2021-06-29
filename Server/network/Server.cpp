@@ -34,7 +34,10 @@ void Server::on_tick() {
 	//	player.second.on_tick();
 	//}
 	//std::cout << "tick()\n";
-	
+	for (auto&& entity : uuid_entity_map) {
+		// call impl->on_render for all entities
+		static_cast<ServerImpl*>(entity.second->impl)->behaviour(entity.second);
+	}
 }
 
 //static std::thread thr;
@@ -68,7 +71,7 @@ bool Server::on_join(TCPConnection::ptr connection) {
 	/*
 	* Send player to other clients
 	*/
-	psend_except(entity->packet_new(), connection);
+	psend_all(entity->packet_new(), connection);
 
 	return true;
 }
@@ -78,20 +81,26 @@ void Server::on_packet(TCPConnection::ptr owner, Packet packet) {
 	std::cout << "on_packet()\n";
 
 	switch (packet.type) {
-	case Packet::Type::TRANSFORM: {
+	case Packet::Type::SRC_CLIENT_INPUT: {
 		// update the entities data
 
-		auto t = Packet::deserialize<Packet::Transform>(packet);
+		auto t = Packet::deserialize<Packet::ClientInput>(packet);
 
 		//t->target = owner->uuid;
 		//this->playerList.get_online_player()
 		//t->target = 0;
 
+		////uuid_entity_map[owner->uuid]->set_transform(
+		////	t->x, t->y,
+		////	t->vx, t->vy,
+		////	t->ax, t->ay,
+		////	t->angle);
+
 		/*
 		* dereference of packet is used, not ptr
 		*/
-		t->uuid = owner->uuid; // do not trust client sent uuid
-		send_except(std::move(*t), owner);
+		//t->uuid = owner->uuid; // do not trust client sent uuid
+		//send_except(std::move(*t), owner);
 		break;
 	}
 	//case Packet::Type::CHAT32: {
@@ -105,10 +114,13 @@ void Server::on_packet(TCPConnection::ptr owner, Packet packet) {
 void Server::on_quit(TCPConnection::ptr connection) {
 	std::cout << connection->uuid << " has quit\n";
 
+	EntityPlayer::ptr entity = std::make_shared<EntityPlayer>(connection->uuid, "", new ServerImplPlayer());
+	psend_all(entity->packet_delete(), connection);
+
 	// send destroy to all players
-	psend_except(uuid_entity_map[connection->uuid]->packet_delete(), connection);
+	//psend_except(uuid_entity_map[connection->uuid]->packet_delete(), connection);
 
 	// remove entity from map
-	uuid_entity_map.erase(connection->uuid);
+	//uuid_entity_map.erase(connection->uuid);
 
 }

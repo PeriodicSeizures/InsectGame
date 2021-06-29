@@ -5,10 +5,14 @@
 #include "TCPClient.h"
 #include "entity/IEntity.h"
 
+
+
 class Client : public TCPClient {
 
 private:
-	std::unordered_map<UUID, IEntity::ptr> entities;
+	std::unordered_map<UUID, IEntity::ptr> uuid_entity_map;
+
+	uint32_t num_packets;
 
 	EntityPlayer::ptr player;
 
@@ -26,7 +30,12 @@ private:
 	/*
 	* events
 	*/
-	void on_packet(Packet) override;
+	void auth_listener(Packet);
+
+	void game_listener(Packet);
+
+
+
 
 };
 

@@ -5,6 +5,12 @@ Client* CLIENT = nullptr;
 
 Client::Client() {
 	player = std::make_shared<EntityPlayer>(0, "", new ClientImpl());
+
+	// register
+	//register_listener(std::bind(&Client::auth_listener, std::placeholders::_1, this));
+
+	//auto f = std::bind(&Client::auth_listener, this, std::placeholders::_1);
+	register_listener(std::bind(&Client::game_listener, this, std::placeholders::_1));
 }
 
 Client::~Client() {}
@@ -83,19 +89,16 @@ void Client::on_tick() {
 	if (player->ax_prev != player->ax || 
 		player->ay_prev != player->ay) {
 
-		Packet::Transform packet = {
-			0,		// uuid
-			player->x, player->y,	// pos
-			player->vx, player->vy, // vel
-			player->ax, player->ay,	// acc
-			player->angle	// angle
+		Packet::ClientInput packet = {
+			0,				// seq
+			Input::SHOOT	// fill in packet (REMOVE LATER
 		};
 
 		send(std::move(packet));
 	}
 
 	// do something per 1/20 seconds
-	for (auto&& entity : entities) {
+	for (auto&& entity : uuid_entity_map) {
 		entity.second->on_tick();
 	}
 
@@ -107,7 +110,7 @@ void Client::on_render() {
 	Engine::fill(Engine::BLACK);
 
 	// ...
-	for (auto&& entity : entities) {
+	for (auto&& entity : uuid_entity_map) {
 		// call impl->on_render for all entities
 		static_cast<ClientImpl*>(entity.second->impl)->
 			on_render(entity.second->x,
@@ -128,14 +131,19 @@ void Client::on_render() {
 	Engine::doRender();
 }
 
-void Client::on_packet(Packet packet) {
+void Client::auth_listener(Packet packet) {
+	// perform listens in order, no asio needed!
+
+}
+
+void Client::game_listener(Packet packet) {
 	// what to do when a packet is received
 	switch (packet.type) {
-	case Packet::Type::TRANSFORM: {
-		auto t = Packet::deserialize<Packet::Transform>(packet);
-		auto&& find = entities.find(t->uuid);
+	case Packet::Type::SRC_SERVER_TRANSFORM: {
+		auto t = Packet::deserialize<Packet::ServerTransform>(packet);
+		auto&& find = uuid_entity_map.find(t->uuid);
 		std::cout << t->uuid << " transform \n";
-		if (find != entities.end()) {
+		if (find != uuid_entity_map.end()) {
 			
 			/*
 			* move the uuid player
@@ -148,7 +156,7 @@ void Client::on_packet(Packet packet) {
 		auto t = Packet::deserialize<Packet::PlayerNew>(packet);
 		// add to map
 		std::cout << t->uuid << " new player\n";
-		entities.insert({ t->uuid, 
+		uuid_entity_map.insert({ t->uuid, 
 			std::make_shared<EntityPlayer>(t->uuid, t->name, new ClientImpl()) });
 		break;
 	}
@@ -156,7 +164,7 @@ void Client::on_packet(Packet packet) {
 		auto t = Packet::deserialize<Packet::EntityDelete>(packet);
 
 		// delete from entities
-		entities.erase(t->uuid);
+		uuid_entity_map.erase(t->uuid);
 
 		break;
 	}

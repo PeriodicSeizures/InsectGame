@@ -24,6 +24,10 @@ private:
 	std::condition_variable cv;
 	std::mutex mux;
 
+	// callback listener
+	//void (*listener)(Packet);
+	std::function<void(Packet)> listener;
+
 public:
 	TCPClient();
 	virtual ~TCPClient();
@@ -61,11 +65,25 @@ public:
 	*/
 	void set_render(bool a);
 
+	void dummy(Packet);
+
+	template<typename C>
+	void register_listener(void (C::*f)(Packet), C &c) {
+		//(c.*f)(std::placeholders::_1);
+	}
+
+	//template<typename T>
+	//T listener_callback;
+
+	//void register_listener(void (*fn)(Packet));
+	void register_listener(std::function<void(Packet)>);
+
 private:
 	virtual void on_tick() = 0;
 	virtual void on_render() = 0;
 
-	virtual void on_packet(Packet) = 0;
+	//virtual void on_packet(Packet) = 0;
+	
 };
 
 #endif

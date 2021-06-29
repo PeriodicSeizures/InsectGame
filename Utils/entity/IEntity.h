@@ -16,7 +16,9 @@ namespace Entity {
 };
 
 class IEntity : public std::enable_shared_from_this<IEntity>
-{
+{private:
+	bool force_moved = false;
+
 public:
 	// ptr
 	typedef std::shared_ptr<IEntity> ptr;
