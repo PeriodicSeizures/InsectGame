@@ -2,11 +2,8 @@
 #define TCP_CONNECTION_H
 
 #include <memory>
-#include <deque>
-#include <unordered_map>
 #include "Packet.h"
 #include "../AsyncQueue.h"
-//#include "../entity/IEntity.h" //
 
 #ifdef _WIN32
 #define _WIN32_WINNT 0x0A00
@@ -21,11 +18,6 @@ enum class Side {
 	CLIENT, SERVER
 };
 
-//num class QuitStatus {
-//	UNEXPECTED, 
-//
-//;
-
 typedef asio::ssl::stream<tcp::socket> ssl_socket;
 struct OwnedPacket;
 
@@ -36,36 +28,28 @@ public:
 
 private:
 	/*
-	* REQUIRED CONNECTION MEMBERS
-	* do not touch!
+	* SHARED CONNECTION VARIABLES
 	*/
 	static Side SIDE;
 	static AsyncQueue<OwnedPacket> *in_packets_s;
 	static AsyncQueue<Packet> *in_packets_c;
-	//static std::function<TCPConnection::ptr> on_quit_handler;
 
+	/*
+	* PER CONNECTION MEMBERS
+	*/
 	ssl_socket _socket;
 	AsyncQueue<Packet> out_packets;
 	Packet temp;
 	bool open = false;
 
-	//long long period_ms;
-	//std::atomic_llong latency_ms;
-	//bool waiting_pong;
-	//std::chrono::steady_clock::time_point last_ping;
-
 	asio::steady_timer ping_timer;
 	asio::steady_timer pong_timer;
-	std::atomic_llong latency_ms;
+	std::atomic<uint16_t> latency_ms;
 	std::chrono::steady_clock::time_point last_ping;
-
-	//uint16_t in_rate; // count avg packets per second
 
 public:
 	/*
-	* mess with these
-	* 
-	* mainly used by server 
+	* unused at times
 	*/
 
 	UUID uuid = -1;
@@ -77,7 +61,7 @@ public:
 	static void init(AsyncQueue<OwnedPacket>* in_packets_s,
 		AsyncQueue<Packet>* in_packets_c);
 
-	TCPConnection(asio::io_context &ctx, ssl_socket); // server
+	TCPConnection(asio::io_context &ctx, ssl_socket);
 	~TCPConnection();
 
 	ssl_socket& socket();
@@ -85,16 +69,13 @@ public:
 	bool is_open();
 	void close();
 
-	//UUID getUUID();
-	//void setUUID(UUID uuid);
-
 	/*
-	* Begin async readers and writers
+	* ssl_handshake(): Performs ssl handshake, then starts reader
 	*/
 	void ssl_handshake();
 
 	/*
-	* Send data along connection
+	* [p]send(...): Send structure or data along connection
 	*/
 	void psend(Packet packet);
 
@@ -103,25 +84,19 @@ public:
 		psend(std::move(Packet::serialize(structure)));
 	}
 
-	long long latency();
+	/*
+	* latency(): Returns the latency in ms
+	*/
+	uint16_t latency();
 
 private:
-	//void pinger();
-
 	void read_header();
 	void read_body();
 
 	void write_header();
 	void write_body();
 
-	/*
-	* check_pong(): Will cause a timeout for any outstanding pong
-	*/
-	void check_pong();
-	
-	/*
-	* check_ping(): 
-	*/
+	void check_pong();	
 	void check_ping();
 
 };

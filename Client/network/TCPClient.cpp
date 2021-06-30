@@ -8,15 +8,11 @@ TCPClient::TCPClient()
 		_io_context,
 		ssl_socket(_io_context, _ssl_context));
 
-	//_ssl_context.load_verify_file("ca.pem");
 	_ssl_context.use_private_key_file("privkey.pem", asio::ssl::context::pem);
-		// just skips certificate verification since
-	// its too complicated, and not upmost
-	// important or necessary
+
 	_ssl_context.set_verify_mode(asio::ssl::verify_none);
 
 	TCPConnection::init(nullptr, &in_packets);
-
 }
 
 TCPClient::~TCPClient() {
@@ -83,6 +79,8 @@ void TCPClient::start() {
 
 		/*
 		* Render every 16.6ms, strictly
+		*   the problem with meshing render and ticker in same thread
+		*   is that renderer can delay the most, and steal cycles
 		*/
 		auto renders_elapsed = std::chrono::duration_cast<std::chrono::microseconds>(now - last_render).count();
 		if (renders_elapsed > 1666 && do_render) {
@@ -149,7 +147,3 @@ void TCPClient::set_render(bool a) {
 void TCPClient::register_listener(std::function<void(Packet)> f) {
 	listener = f;
 }
-
-//void TCPClient::register_listener(void (*fn)(Packet)) {
-//	listener = fn;
-//}

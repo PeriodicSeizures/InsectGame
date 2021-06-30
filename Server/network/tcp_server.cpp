@@ -10,17 +10,14 @@ TCPServer::TCPServer(unsigned short port) :
 	_ssl_context(asio::ssl::context::tls) {
 	/*
 	* certificate and encryption init
+	* 
+	* this is probably all wrong
 	*/
-	//_ssl_context.set_options(
-	//	asio::ssl::context::default_workarounds
-	//	| asio::ssl::context::no_sslv2
-	//	| asio::ssl::context::single_dh_use);
 	_ssl_context.set_verify_mode(asio::ssl::verify_none);
-	//_ssl_context.set_password_callback(std::bind(&get_password));
-	//_ssl_context.cer
+
 	_ssl_context.use_certificate_chain_file("newcert.pem");
 	_ssl_context.use_private_key_file("privkey.pem", asio::ssl::context::pem);
-	//// for diffie helman?
+
 	_ssl_context.use_tmp_dh_file("dh1024.pem");
 
 	TCPConnection::init(&in_packets, nullptr);
@@ -96,8 +93,6 @@ void TCPServer::psend_all(Packet packet, TCPConnection::ptr except) {
 			// send
 			if (conn != except)
 				conn->psend(std::move(packet));
-
-				//psend_to(std::move(packet), *it);
 			++it;
 		}
 		else {
@@ -105,55 +100,14 @@ void TCPServer::psend_all(Packet packet, TCPConnection::ptr except) {
 
 			// event
 			on_quit(conn);
-
-			// free instance
-			//(*it).reset();
-			
-			
-
-			//conn.reset();
-
-			// delete and reassign
 		}
 	}
 
 }
 
-//void TCPServer::psend_except(Packet packet, TCPConnection::ptr connection) {
-//	if (!connection) {
-//		//disconnect(connection);
-//		return;
-//	}
-//
-//
-//
-//	for (auto&& conn : connections) {
-//		if (conn != connection)
-//			conn->psend(std::move(packet));
-//			//psend_to(std::move(packet), conn);
-//
-//		//if (conn && conn != connection)
-//		//	psend_to(std::move(packet), conn);
-//		//else
-//		//	disconnect(conn, false);
-//	}
-//}
-
 void TCPServer::on_update() {
 
 	in_packets.wait();
-
-	/*
-	* iterate connections, testing for a dead connection
-	*/
-	//for (auto&& it = connections.cbegin(); it != connections.cend(); ) {
-	//	if (!(*it) || !((*it)->is_open())) {
-	//		it = connections.erase(it);
-	//	}
-	//	else {
-	//		++it;
-	//	}
-	//}
 
 	/*
 	* process packets
@@ -162,13 +116,7 @@ void TCPServer::on_update() {
 	while (!in_packets.empty() && limit--) {
 		auto&& owned_packet = in_packets.pop_front();
 
-		// might have issue
-		//if (!owned_packet.owner->is_open())
-		//	disconnect(owned_packet.owner, false);
-		//else
-			on_packet(owned_packet.owner, std::move(owned_packet.packet));
-
-		//owned_packet.owner.reset()
+		on_packet(owned_packet.owner, std::move(owned_packet.packet));
 	}
 
 }
@@ -176,19 +124,6 @@ void TCPServer::on_update() {
 bool TCPServer::is_alive() {
 	return alive;
 }
-
-//void TCPServer::disconnect(TCPConnection::ptr connection) {
-//	std::cout << "attempt to disconnect()\n";
-//
-//	if (connection->is_open()) {
-//		connection->close();
-//	}
-//
-//	// free
-//	on_quit(connection);
-//	//in_packets.notify();
-//	connections.erase(connection);
-//}
 
 void TCPServer::do_accept()
 {
@@ -219,22 +154,22 @@ void TCPServer::do_accept()
 
 				// Whether to accept or deny the connection
 				if (on_join(conn)) {
-					//conn->handshake();
 					connections.insert(conn);
-					//conn->read_header();
 				}
 				else {
-
+					/*
+					* something to do on deny ...
+					*/
 				}
 				conn.reset();
 			}
 			catch (const std::system_error& e) 
 			{
-				std::cout << "error in connect: " << e.what() << "\n";
+				LOG_DEBUG("connect error: %s\n", e.what());
 			}
 		}
 
-		do_accept(); // loops back to continue accept
+		do_accept();
 	});
 
 }

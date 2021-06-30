@@ -4,19 +4,18 @@
 Side TCPConnection::SIDE;
 AsyncQueue<OwnedPacket>* TCPConnection::in_packets_s;
 AsyncQueue<Packet>* TCPConnection::in_packets_c;
-//std::function<TCPConnection::ptr> TCPConnection::on_quit_handler;
 
 void TCPConnection::init(AsyncQueue<OwnedPacket>* in_packets_s,
 	AsyncQueue<Packet>* in_packets_c) 
 {
+	assert(in_packets_s || in_packets_c, "packet queue not assigned\n");
+
 	if (in_packets_s)
 		SIDE = Side::SERVER;
 	else if (in_packets_c) SIDE = Side::CLIENT;
-	else throw "no packet queue has been assigned";
 
 	TCPConnection::in_packets_s = in_packets_s;
 	TCPConnection::in_packets_c = in_packets_c;
-	//TCPConnection::on_quit_handler = on_quit_handler;
 }
 
 // https://www.boost.org/doc/libs/1_76_0/doc/html/boost_asio/example/cpp11/ssl/client.cpp
@@ -25,20 +24,11 @@ TCPConnection::TCPConnection(asio::io_context& ctx, ssl_socket socket)
 	ping_timer(ctx),
 	pong_timer(ctx)
 {
-	/*
-	* clientside certificate init
-	*/
-
 	_socket.set_verify_mode(asio::ssl::verify_none);
-
-	//_socket.set_verify_mode(asio::ssl::verify_peer);
-	//_socket.set_verify_callback(
-	//	std::bind(&verify_certificate, std::placeholders::_1, std::placeholders::_2));
-
 }
 
 TCPConnection::~TCPConnection() {
-	std::cout << "deconstructor()\n";
+	LOG_DEBUG("TCPConnection::deconstructor()\n");
 }
 
 ssl_socket& TCPConnection::socket() {
@@ -46,8 +36,6 @@ ssl_socket& TCPConnection::socket() {
 }
 
 bool TCPConnection::is_open() {
-	// return the status
-	//return _socket.lowest_layer().is_open();
 	return open;
 }
 
@@ -62,9 +50,9 @@ void TCPConnection::close() {
 
 void TCPConnection::ssl_handshake() {
 
-	//send(Packet::Ping{});
-
-	// perform ssl handshake
+	/*
+	* Perform a blocking handshake to stay consistent
+	*/
 	auto self(shared_from_this());
 	std::error_code ec;
 	_socket.handshake(SIDE == Side::SERVER ? asio::ssl::stream_base::server :
@@ -72,40 +60,22 @@ void TCPConnection::ssl_handshake() {
 
 	if (!ec) {
 		open = true;
-		//if (SIDE == Side::CLIENT)
 		
 		read_header();
 
+		/*
+		* Prepare pong timeout checker
+		*/
 		send(Packet::Ping{});
 		pong_timer.expires_after(std::chrono::seconds(10));
 		pong_timer.async_wait(std::bind(&TCPConnection::check_pong, this));
 
-		// Send a ping
-		
-
-
-		//if (SIDE == Side::CLIENT)
-			//pinger();
-
 	}
 	else {
-		std::cout << "ssl handshake error: " << ec.message() << "\n";
-	}
+		LOG_DEBUG("ssl handshake error: %s\n", ec.message().c_str());
 
-	//_socket.async_handshake(SIDE==Side::SERVER ? asio::ssl::stream_base::server :
-	//	asio::ssl::stream_base::client,
-	//	[this, self](const std::error_code& e)
-	//{
-	//	if (!e) {
-	//		open = true;
-	//		//if (SIDE == Side::CLIENT)
-	//			read_header();
-	//		//do nothing yet
-	//	}
-	//	else {
-	//		std::cout << "ssl handshake error: " << e.message() << "\n";
-	//	}
-	//});
+		close();
+	}
 }
 
 void TCPConnection::psend(Packet packet) {
@@ -115,123 +85,51 @@ void TCPConnection::psend(Packet packet) {
 		write_header();	
 }
 
-long long TCPConnection::latency() {
+uint16_t TCPConnection::latency() {
 	return latency_ms;
 }
-
-//void TCPConnection::pinger() {
-//	// start a tbread to ping every period_ms ms
-//
-//	asio::post([this]() {
-//		// start pinger
-//		while (open) {
-//			// immediately send a ping
-//			std::cout << "ping\n";
-//			send(Packet::Ping{});
-//			waiting_pong = true;
-//
-//			// if the other fails to respond in 5 seconds, destroy connection
-//			std::this_thread::sleep_for(std::chrono::milliseconds(5000));
-//
-//			// ping must have been received and updated by then
-//			// aka if still waiting for pong
-//			if (waiting_pong) {
-//				// destroy connection and break
-//				// this assumes that the connection has abruptly stopped responding
-//				std::cout << "no pong received\n";
-//				if (open)
-//					_socket.lowest_layer().close();
-//
-//				open = false;
-//
-//				break;
-//			}
-//			else {
-//				// send another pong, 
-//				// aka do nothing as this loops
-//			}
-//		}
-//	});
-//}
 
 void TCPConnection::read_header() {
 	if (!open)
 		return;
-
-	// each time a new read is performed, this will reset the timer
 
 	auto self(shared_from_this());
 	asio::async_read(_socket,
 		asio::buffer(&(this->temp.type), Packet::SIZE),
 		[this, self](const std::error_code &e, size_t) {
 		if (!e) {
-			LOG_DEBUG("read_header()");
-
-			// always respond to a ping with a 'pong'
-			//if (temp.type == Packet::Type::PING) {
-			//	std::cout << "pong!\n";
-			//	send(Packet::Pong{});
-			//	//read_header();
-			//} // if an expected pong is received, measure the duration
-			//else if (temp.type == Packet::Type::PONG) {
-			//	if (waiting_pong) {
-			//		// toggle wait
-			//		waiting_pong = false;
-			//		auto now = std::chrono::steady_clock::now();
-			//		latency_ms = std::chrono::duration_cast<std::chrono::milliseconds>(now - last_ping).count();
-			//		//read_header();
-			//	}
-			//	else {
-			//
-			//	}
-			//	//read_header();
-			//}
+			LOG_DEBUG("read_header()\n");
 
 			if (temp.type == Packet::Type::PING) {
-				std::cout << "pong!\n";
+				LOG_DEBUG("pong!\n");
 				send(Packet::Pong{});
-			} // behaviour will be undefined if a pong was not expected but was received
+			} // undefined behaviour arises from unexpected pongs
 			else if (temp.type == Packet::Type::PONG) {
 				auto now = std::chrono::steady_clock::now();
-				latency_ms = std::chrono::duration_cast<std::chrono::milliseconds>(now - last_ping).count();
+				latency_ms = static_cast<uint16_t>(
+					std::chrono::duration_cast<std::chrono::milliseconds>(now - last_ping).count());
 				
-				std::cout << latency_ms << "ms\n";
+				LOG_DEBUG("%ums\n", latency_ms);
 
 				/*
-				* In 5 seconds, send another ping
+				* Send another ping after 5 seconds
 				*/
 				ping_timer.expires_after(std::chrono::seconds(5));
 				ping_timer.async_wait(std::bind(&TCPConnection::check_ping, this));
-
-				//ping_timer.async_wait([this]() {
-				//	if (!open)
-				//		return;
-				//
-				//	if (ping_timer.expiry() <= asio::steady_timer::clock_type::now()) {
-				//		send(Packet::Ping{});
-				//		pong_timer.expires_after(std::chrono::seconds(10));
-				//	}
-				//});
-
 			}
 
 			read_body();
 
 		}
 		else {
-			std::cout << "read header error: " << e.message() << "\n";
+			LOG_DEBUG("read header error: %s\n", e.message().c_str());
 			close();
-			//if (SIDE == Side::SERVER) in_packets_s->notify();
 		}
 	}
 	);
 }
 
 void TCPConnection::read_body() {
-	/*
-	* If packet has data to be read, then read
-	*/
-
 	if (!open)
 		return;
 	
@@ -239,14 +137,13 @@ void TCPConnection::read_body() {
 	Packet::ErrorCode p_e = Packet::S(temp.type, len);
 
 	if (p_e != Packet::ErrorCode::OK) {
-		std::cout << "invalid packet\n";
+		LOG_DEBUG("read invalid packet: %u\n", (uint16_t)temp.type);
 	} else if (len > 0) {
-		//temp.data = new char[len];
 		temp.data.resize(len);
 
 		auto self(shared_from_this());
 		asio::async_read(_socket,
-			asio::buffer(temp.data), // len
+			asio::buffer(temp.data),
 			[this, self](const std::error_code& e, size_t) {
 			if (!e) {
 				if (SIDE == Side::SERVER)
@@ -254,31 +151,27 @@ void TCPConnection::read_body() {
 				else
 					this->in_packets_c->push_back(temp);
 
-				LOG_DEBUG("read_body()");
+				LOG_DEBUG("read_body()\n");
 
-				//std::cout << "incoming body\n"; // << (uint16_t)in_packet_type << "\n";
 				read_header();
 			}
 			else {
-				std::cout << "read body error: " << e.message() << "\n";
+
+				LOG_DEBUG("read body error: %s\n", e.message().c_str());
 				close();
-				//if (SIDE == Side::SERVER) in_packets_s->notify();
 			}
 		}
 		);
 	}
 	else {
-		std::cout << "r1\n";
+		LOG_DEBUG("r1\n");
 		read_header();
 	}
 }
 
 void TCPConnection::write_header() {
-
 	if (!open)
 		return;
-
-	LOG_DEBUG("write_header()");
 
 	/*
 	* When about to send out the PING packet, record the current time
@@ -293,14 +186,13 @@ void TCPConnection::write_header() {
 
 		[this, self](const std::error_code& e, size_t) {
 		if (!e) {
-			//if (out_packets.front().type == )
+			LOG_DEBUG("write_header()\n");
 
 			write_body();
 		}
 		else {
-			std::cout << "write header error: " << e.message() << "\n";
+			LOG_DEBUG("write header error: %s\n", e.message().c_str());
 			close();
-			//if (SIDE == Side::SERVER) in_packets_s->notify();
 		}
 	}
 	);
@@ -313,22 +205,21 @@ void TCPConnection::write_body() {
 	uint16_t len = Packet::sizes[(uint16_t)out_packets.front().type];
 	
 	if (len > 0) {
-		LOG_DEBUG("write_body()");
-
 		auto self(shared_from_this());
 		asio::async_write(_socket,
-			asio::buffer(out_packets.front().data), // len
+			asio::buffer(out_packets.front().data),
 			[this, self](const std::error_code& e, size_t) {
 			if (!e) {
+				LOG_DEBUG("write_body()\n");
+
 				out_packets.pop_front();
 
 				if (!out_packets.empty())
 					write_header();
 			}
 			else {
-				std::cout << "write body error: " << e.message() << "\n";
+				LOG_DEBUG("write body error: %s\n", e.message().c_str());
 				close();
-				//if (SIDE == Side::SERVER) in_packets_s->notify();
 			}
 		}
 		);
@@ -348,7 +239,7 @@ void TCPConnection::check_pong() {
 	// deadline before this actor had a chance to run.
 	if (pong_timer.expiry() <= asio::steady_timer::clock_type::now())
 	{
-		std::cout << "pong timeout\n";
+		LOG_DEBUG("pong timeout\n");
 
 		// The deadline has passed. The socket is closed so that any outstanding
 		// asynchronous operations are cancelled.
@@ -374,7 +265,3 @@ void TCPConnection::check_ping() {
 		pong_timer.expires_after(std::chrono::seconds(10));
 	}
 }
-
-//void TCPConnection::reset_pinger() {
-//	pinger.expires_after(std::chrono::seconds(10));
-//}

@@ -22,23 +22,17 @@ enum class Input : uint16_t {
 //	ANT, SPIDER, MILLIPEDE, SLIME_PUDDLE
 //};
 
-//#define DO_LOG_DEBUG
+#define DO_LOG_DEBUG
 
 void precise_sleep(double seconds);
 
-//enum class AuthOrder {
-//	VERIFY_COMMON,
-//
-//};
-
-#ifdef _DEBUG 
-	#ifdef DO_LOG_DEBUG
-	#define LOG_DEBUG(s) printf("%s\n", s);
-	#else
-	#define LOG_DEBUG(s)
-	#endif // DO_LOG_DEBUG
+// https://stackoverflow.com/questions/679979/how-to-make-a-variadic-macro-variable-number-of-arguments
+#ifdef DO_LOG_DEBUG
+	#define LOG_DEBUG printf
 #else
-#define LOG_DEBUG(s)
-#endif // _DEBUG
+	#define LOG_DEBUG //
+#endif // DO_LOG_DEBUG
+
+//#define LOG_ERROR printf
 
 #endif
