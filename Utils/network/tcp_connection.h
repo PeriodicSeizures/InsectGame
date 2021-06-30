@@ -49,9 +49,14 @@ private:
 	AsyncQueue<OwnedPacket> *in_packets_s;
 	AsyncQueue<Packet> *in_packets_c;
 
-	long long period_ms;
+	//long long period_ms;
+	//std::atomic_llong latency_ms;
+	//bool waiting_pong;
+	//std::chrono::steady_clock::time_point last_ping;
+
+	asio::steady_timer ping_timer;
+	asio::steady_timer pong_timer;
 	std::atomic_llong latency_ms;
-	bool waiting_pong;
 	std::chrono::steady_clock::time_point last_ping;
 
 	//uint16_t in_rate; // count avg packets per second
@@ -69,8 +74,8 @@ public:
 	//EntityPlayer::ptr entity;
 
 public:
-	TCPConnection(ssl_socket, AsyncQueue<OwnedPacket>*); // server
-	TCPConnection(ssl_socket, AsyncQueue<Packet>*); // client
+	TCPConnection(asio::io_context &ctx, ssl_socket, AsyncQueue<OwnedPacket>*); // server
+	TCPConnection(asio::io_context &ctx, ssl_socket, AsyncQueue<Packet>*); // client
 	~TCPConnection();
 
 	ssl_socket& socket();
@@ -99,7 +104,7 @@ public:
 	long long latency();
 
 private:
-	void pinger();
+	//void pinger();
 
 	void read_header();
 	void read_body();
@@ -107,9 +112,16 @@ private:
 	void write_header();
 	void write_body();
 
-	//void begin_measures();
-	//void write_ping();
-	//void write_pong();
+	/*
+	* check_pong(): Will cause a timeout for any outstanding pong
+	*/
+	void check_pong();
+	
+	/*
+	* check_ping(): 
+	*/
+	void check_ping();
+
 };
 
 struct OwnedPacket {

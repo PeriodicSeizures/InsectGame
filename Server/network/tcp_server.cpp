@@ -206,6 +206,7 @@ void TCPServer::do_accept()
 
 
 				auto conn = std::make_shared<TCPConnection>(
+					_io_context,
 					ssl_socket(std::move(socket), _ssl_context),
 					&in_packets);
 

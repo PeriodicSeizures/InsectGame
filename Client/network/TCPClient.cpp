@@ -1,12 +1,13 @@
 #include "TCPClient.h"
 
 TCPClient::TCPClient() 
-	: _ssl_context(asio::ssl::context::tls),
-	connection(
-		std::make_shared<TCPConnection>(
-			ssl_socket(_io_context, _ssl_context),
-			&in_packets)
-	) {
+	: _ssl_context(asio::ssl::context::tls)
+{
+
+	connection = std::make_shared<TCPConnection>(
+		_io_context,
+		ssl_socket(_io_context, _ssl_context),
+		&in_packets);
 
 	//_ssl_context.load_verify_file("ca.pem");
 	_ssl_context.use_private_key_file("privkey.pem", asio::ssl::context::pem);
