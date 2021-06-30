@@ -1,23 +1,27 @@
 #include <iostream>
 #include "tcp_connection.h"
 
-TCPConnection::TCPConnection(asio::io_context &ctx, ssl_socket socket, AsyncQueue<OwnedPacket>* in_packets_s)
-	: _socket(std::move(socket)), 
-	in_packets_s(in_packets_s), 
-	in_packets_c(nullptr),
-	SIDE(Side::SERVER),
-	ping_timer(ctx),
-	pong_timer(ctx)
+Side TCPConnection::SIDE;
+AsyncQueue<OwnedPacket>* TCPConnection::in_packets_s;
+AsyncQueue<Packet>* TCPConnection::in_packets_c;
+//std::function<TCPConnection::ptr> TCPConnection::on_quit_handler;
+
+void TCPConnection::init(AsyncQueue<OwnedPacket>* in_packets_s,
+	AsyncQueue<Packet>* in_packets_c) 
 {
-	_socket.set_verify_mode(asio::ssl::verify_none);
+	if (in_packets_s)
+		SIDE = Side::SERVER;
+	else if (in_packets_c) SIDE = Side::CLIENT;
+	else throw "no packet queue has been assigned";
+
+	TCPConnection::in_packets_s = in_packets_s;
+	TCPConnection::in_packets_c = in_packets_c;
+	//TCPConnection::on_quit_handler = on_quit_handler;
 }
 
 // https://www.boost.org/doc/libs/1_76_0/doc/html/boost_asio/example/cpp11/ssl/client.cpp
-TCPConnection::TCPConnection(asio::io_context& ctx, ssl_socket socket, AsyncQueue<Packet>* in_packets_c)
-	: _socket(std::move(socket)), 
-	in_packets_s(nullptr),
-	in_packets_c(in_packets_c), 
-	SIDE(Side::CLIENT),
+TCPConnection::TCPConnection(asio::io_context& ctx, ssl_socket socket)
+	: _socket(std::move(socket)),
 	ping_timer(ctx),
 	pong_timer(ctx)
 {
@@ -69,7 +73,7 @@ void TCPConnection::ssl_handshake() {
 	if (!ec) {
 		open = true;
 		//if (SIDE == Side::CLIENT)
-
+		
 		read_header();
 
 		send(Packet::Ping{});

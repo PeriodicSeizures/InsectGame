@@ -6,8 +6,7 @@ TCPClient::TCPClient()
 
 	connection = std::make_shared<TCPConnection>(
 		_io_context,
-		ssl_socket(_io_context, _ssl_context),
-		&in_packets);
+		ssl_socket(_io_context, _ssl_context));
 
 	//_ssl_context.load_verify_file("ca.pem");
 	_ssl_context.use_private_key_file("privkey.pem", asio::ssl::context::pem);
@@ -15,6 +14,8 @@ TCPClient::TCPClient()
 	// its too complicated, and not upmost
 	// important or necessary
 	_ssl_context.set_verify_mode(asio::ssl::verify_none);
+
+	TCPConnection::init(nullptr, &in_packets);
 
 }
 

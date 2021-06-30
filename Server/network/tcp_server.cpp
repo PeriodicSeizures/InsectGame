@@ -23,6 +23,7 @@ TCPServer::TCPServer(unsigned short port) :
 	//// for diffie helman?
 	_ssl_context.use_tmp_dh_file("dh1024.pem");
 
+	TCPConnection::init(&in_packets, nullptr);
 }
 
 TCPServer::~TCPServer() {
@@ -93,23 +94,26 @@ void TCPServer::psend_all(Packet packet, TCPConnection::ptr except) {
 
 		if (conn && conn->is_open()) {
 			// send
-			if (*it != except)
+			if (conn != except)
 				conn->psend(std::move(packet));
 
 				//psend_to(std::move(packet), *it);
 			++it;
 		}
 		else {
+			it = connections.erase(it);
+
 			// event
 			on_quit(conn);
 
 			// free instance
 			//(*it).reset();
+			
+			
 
-			conn.reset();
+			//conn.reset();
 
 			// delete and reassign
-			it = connections.erase(it);
 		}
 	}
 
@@ -207,8 +211,7 @@ void TCPServer::do_accept()
 
 				auto conn = std::make_shared<TCPConnection>(
 					_io_context,
-					ssl_socket(std::move(socket), _ssl_context),
-					&in_packets);
+					ssl_socket(std::move(socket), _ssl_context));
 
 				// always establish connection first
 				// handshake will be blocking

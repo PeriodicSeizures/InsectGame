@@ -39,15 +39,15 @@ private:
 	* REQUIRED CONNECTION MEMBERS
 	* do not touch!
 	*/
-	const Side SIDE;
+	static Side SIDE;
+	static AsyncQueue<OwnedPacket> *in_packets_s;
+	static AsyncQueue<Packet> *in_packets_c;
+	//static std::function<TCPConnection::ptr> on_quit_handler;
 
 	ssl_socket _socket;
 	AsyncQueue<Packet> out_packets;
 	Packet temp;
 	bool open = false;
-
-	AsyncQueue<OwnedPacket> *in_packets_s;
-	AsyncQueue<Packet> *in_packets_c;
 
 	//long long period_ms;
 	//std::atomic_llong latency_ms;
@@ -74,8 +74,10 @@ public:
 	//EntityPlayer::ptr entity;
 
 public:
-	TCPConnection(asio::io_context &ctx, ssl_socket, AsyncQueue<OwnedPacket>*); // server
-	TCPConnection(asio::io_context &ctx, ssl_socket, AsyncQueue<Packet>*); // client
+	static void init(AsyncQueue<OwnedPacket>* in_packets_s,
+		AsyncQueue<Packet>* in_packets_c);
+
+	TCPConnection(asio::io_context &ctx, ssl_socket); // server
 	~TCPConnection();
 
 	ssl_socket& socket();
