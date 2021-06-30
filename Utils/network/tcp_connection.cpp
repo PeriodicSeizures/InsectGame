@@ -186,7 +186,7 @@ void TCPConnection::read_header() {
 			if (temp.type == Packet::Type::PING) {
 				std::cout << "pong!\n";
 				send(Packet::Pong{});
-			}
+			} // behaviour will be undefined if a pong was not expected but was received
 			else if (temp.type == Packet::Type::PONG) {
 				auto now = std::chrono::steady_clock::now();
 				latency_ms = std::chrono::duration_cast<std::chrono::milliseconds>(now - last_ping).count();
