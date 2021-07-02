@@ -43,7 +43,8 @@ void TCPServer::start() {
 
 	while (alive) {
 		on_tick();
-		std::this_thread::sleep_for(std::chrono::milliseconds(50));
+		//std::this_thread::sleep_for(std::chrono::milliseconds(50));
+		precise_sleep(0.05);
 	}
 }
 
@@ -62,7 +63,7 @@ void TCPServer::stop() {
 
 void TCPServer::psend_to(Packet packet, TCPConnection::ptr connection) {
 
-	std::cout << "send_to()\n";
+	LOG_DEBUG("send_to()\n");
 	if (connection && connection->is_open()) {
 		connection->psend(std::move(packet));
 	}
@@ -73,7 +74,7 @@ void TCPServer::psend_to(Packet packet, TCPConnection::ptr connection) {
 		// event
 		on_quit(connection);
 
-		//nullify the local instance to have to living reference
+		// nullify the local instance to have to living reference
 		connection.reset();
 
 		// 'connection' still refers to the deque (in this case set)
@@ -87,7 +88,7 @@ void TCPServer::psend_all(Packet packet, TCPConnection::ptr except) {
 	// use std iterator to remove and increment
 	for (auto it = connections.begin(); it != connections.end(); ) {
 
-		TCPConnection::ptr conn = *it;
+		auto conn = *it;
 
 		if (conn && conn->is_open()) {
 			// send

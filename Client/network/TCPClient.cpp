@@ -34,13 +34,13 @@ void TCPClient::start() {
 			cv.notify_one();
 			// 50ms = 20tps
 			// 16.6 ms = 60tps
-			precise_sleep(.01667);
+			precise_sleep(1.0 / 60.0);
 			//std::this_thread::sleep_for(std::chrono::microseconds(1666));
 		}
 	});
 
-	std::chrono::steady_clock::time_point last_tick = std::chrono::steady_clock::now();
-	std::chrono::steady_clock::time_point last_render = std::chrono::steady_clock::now();
+	auto last_tick = std::chrono::steady_clock::now();
+	auto last_render = std::chrono::steady_clock::now();
 
 	while (alive) {
 		std::unique_lock<std::mutex> ul(mux);
@@ -52,7 +52,7 @@ void TCPClient::start() {
 		* Tick every 50ms, strictly
 		*/
 		auto ticks_elapsed = std::chrono::duration_cast<std::chrono::microseconds>(now - last_tick).count();
-		if (ticks_elapsed > 5000) {
+		if (ticks_elapsed >= 50000) {
 			// tick
 			on_tick();
 
@@ -83,7 +83,7 @@ void TCPClient::start() {
 		*   is that renderer can delay the most, and steal cycles
 		*/
 		auto renders_elapsed = std::chrono::duration_cast<std::chrono::microseconds>(now - last_render).count();
-		if (renders_elapsed > 1666 && do_render) {
+		if (renders_elapsed >= 16666 && do_render) {
 			// render and reset
 			on_render();
 			last_render = std::chrono::steady_clock::now();

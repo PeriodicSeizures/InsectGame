@@ -109,7 +109,7 @@ void TCPConnection::read_header() {
 				latency_ms = static_cast<uint16_t>(
 					std::chrono::duration_cast<std::chrono::milliseconds>(now - last_ping).count());
 				
-				LOG_DEBUG("%ums\n", latency_ms);
+				LOG_DEBUG("%ums\n", latency_ms.load());
 
 				/*
 				* Send another ping after 5 seconds

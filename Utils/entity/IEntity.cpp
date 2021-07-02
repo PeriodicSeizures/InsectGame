@@ -103,8 +103,7 @@ void IEntity::set_transform(float x, float y,
 Packet IEntity::packet_transform() {
 
 	// send
-	Packet::ServerTransform transform = { 
-		0,
+	Packet::S2CEntityMotion transform = { 
 		uuid, 
 		x,
 		y,
@@ -121,7 +120,7 @@ Packet IEntity::packet_transform() {
 
 Packet IEntity::packet_delete() {
 
-	Packet::EntityDelete p = {
+	Packet::S2CEntityDelete p = {
 		uuid
 	};
 

@@ -62,7 +62,7 @@ public:
 	*/
 
 	// transform packet
-	Packet packet_transform();
+	virtual Packet packet_transform();
 
 	// new entity packet
 	virtual Packet packet_new() = 0;
@@ -75,6 +75,11 @@ struct EntityPlayer : public IEntity {
 public:
 	typedef std::shared_ptr<EntityPlayer> ptr;
 
+	/*
+	* Server reconciliation (to prevent rubber banding)
+	*/
+	uint32_t input_seq;
+
 private:
 	std::string name;
 
@@ -84,7 +89,9 @@ public:
 public:
 	void on_tick() override;
 
+	Packet packet_transform() override;
+
 	Packet packet_new() override;
 
-
+	void input_move(uint16_t input_mask);
 };

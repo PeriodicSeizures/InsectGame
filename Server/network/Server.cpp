@@ -29,18 +29,31 @@ UUID Server::generateUUID() {
 	return 0;
 }
 
+static int tps = 0;
+static auto last = std::chrono::steady_clock::now();
+
 void Server::on_tick() {
-	//for (auto player : players) {
-	//	player.second.on_tick();
-	//}
-	//std::cout << "tick()\n";
+	/*
+	* Just dont do anything yet
+	*/
+
+	// count ticks per second
+
+	auto now = std::chrono::steady_clock::now();
+	auto diff = std::chrono::duration_cast<std::chrono::microseconds>(now - last).count();
+	if (diff > 1000000) {
+		std::cout << "tps: " << tps << "/20\n";
+		tps = 0;
+		last = std::chrono::steady_clock::now();
+	}
+	tps++;
+
+
+
 	for (auto&& entity : uuid_entity_map) {
-		// call impl->on_render for all entities
 		static_cast<ServerImpl*>(entity.second->impl)->behaviour(entity.second);
 	}
 }
-
-//static std::thread thr;
 
 bool Server::on_join(TCPConnection::ptr connection) {
 
@@ -52,7 +65,7 @@ bool Server::on_join(TCPConnection::ptr connection) {
 	/*
 	* Send uuid to client
 	*/
-	send_to(Packet::PlayerIdentity{ uuid }, connection);
+	send_to(Packet::S2CClientIdentity{ uuid }, connection);
 
 	/*
 	* Send all players to client
@@ -77,45 +90,55 @@ bool Server::on_join(TCPConnection::ptr connection) {
 }
 
 void Server::on_packet(TCPConnection::ptr owner, Packet packet) {
-	std::cout << "on_packet()\n";
+
+	LOG_DEBUG("on_packet()\n");
 
 	switch (packet.type) {
-	case Packet::Type::SRC_CLIENT_INPUT: {
-		// update the entities data
+	case Packet::Type::C2S_CLIENT_INPUT: {
+		// Since server is authoritive, manually manage input
+		auto t = Packet::deserialize<Packet::C2SClientInput>(packet);
 
-		auto t = Packet::deserialize<Packet::ClientInput>(packet);
+		// perform calculation
+		EntityPlayer::ptr p =
+			std::static_pointer_cast<EntityPlayer>(
+				uuid_entity_map[owner->uuid]);
 
-		//uuid_entity_map[owner->uuid]->set_transform(
-		//	t->x, t->y,
-		//	t->vx, t->vy,
-		//	t->ax, t->ay,
-		//	t->angle);
+		// client -> send input to server
 
-		/*
-		* dereference of packet is used, not ptr
-		*/
-		//t->uuid = owner->uuid; // do not trust client sent uuid
-		//send_except(std::move(*t), owner);
+		// server -> calculate motions from input
+
+		// send new motions back to all clients
+
+		p->input_move(t->input_mask);
+		//p->on_physics();
+
+		send_all(Packet::S2CClientMotion{
+			t->seq,
+			p->x, p->y, 
+			p->vx, p->vy, p->ax, p->ay, p->angle });
+
+		// send sequenced motion back to client
+		//send_to(Packet::S2CClientMotion{
+		//	t->seq, p->x, p->y, p->vx, p->vy, p->ax, p->ay, p->angle},
+		//	owner);
+		//
+		//// send motion to all other clients
+		//send_all(Packet::S2CEntityMotion{ 
+		//	p->uuid, p->x, p->y, p->vx, p->vy, p->ax, p->ay, p->angle },
+		//	owner);
+
 		break;
 	}
-	//case Packet::Type::CHAT32: {
-	//	auto t = Packet::deserialize<Packet::Chat32>(packet);
-	//	
-	//	std::cout << "chat: " << t->message << "\n";
-	//}
 	}
 }
 
 void Server::on_quit(TCPConnection::ptr connection) {
 	std::cout << connection->uuid << " has quit\n";
 
-	EntityPlayer::ptr entity = std::make_shared<EntityPlayer>(connection->uuid, "", new ServerImplPlayer());
-	psend_all(entity->packet_delete(), connection);
+	// send deletion packet to all clients except the quitter
+	psend_all(uuid_entity_map[connection->uuid]->packet_delete(), 
+		connection);
 
-	// send destroy to all players
-	//psend_except(uuid_entity_map[connection->uuid]->packet_delete(), connection);
-
-	// remove entity from map
-	//uuid_entity_map.erase(connection->uuid);
-
+	// delete
+	this->uuid_entity_map.erase(connection->uuid);
 }

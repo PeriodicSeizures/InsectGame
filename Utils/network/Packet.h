@@ -31,28 +31,26 @@ struct Packet {
 	enum class Type : uint16_t {
 		PING,
 		PONG,
-		SRC_SERVER_CONNECTION_REFUSED,
-		SRC_SERVER_CONNECTION_VERSION,	// version of server
-		SRC_CLIENT_CONNECTION_LOGIN,	// identity of client
-		CHAT32,		// sent by client to server
 		CHAT64,
-		//SRC_CLIENT_TRANSFORM,
-		SRC_SERVER_TRANSFORM,
-		SRC_CLIENT_INPUT,
-		//SRC_CLIENT_UNTRUSTED_MOTION,
-		SRC_SERVER_PLAYER_NEW,
-		//SRC_SERVER_ENTITY_NEW, // explicitly declare which entity to create
-		SRC_SERVER_ENTITY_DELETE,
-		//SRC_CLIENT_REQUEST_TEAM,
-		SRC_SERVER_PLAYER_IDENTITY,
-		count // kind of hacky
+		S2C_CLIENT_MOTION,
+		S2C_ENTITY_MOTION,
+		C2S_CLIENT_INPUT,
+		S2C_PLAYER_NEW,
+		S2C_ENTITY_DELETE,
+		S2C_CLIENT_IDENTITY,
+
+		count
 	};
 
-	/*
-	* 
-	* Packet declarations
-	* 
-	*/
+	/*******************************************************************\
+	*																	
+	* 	Packet declarations																
+	*																	
+	* 	structure naming etiquette:											
+	* 		- [S2C] / [C2S]: prefix for src->dest or nothing to imply bidirectional 
+	* 		- [name]: general name of packet (name should explain briefly but understandably)
+	*																	
+	\*******************************************************************/
 
 	struct Ping {
 		static constexpr Packet::Type TYPE = Packet::Type::PING;
@@ -62,101 +60,59 @@ struct Packet {
 		static constexpr Packet::Type TYPE = Packet::Type::PONG;
 	};
 
-	struct ConnectionRefused {
-		static constexpr Packet::Type TYPE = Packet::Type::SRC_SERVER_CONNECTION_REFUSED;
-		char message[32];
-	};
-
-	struct ConnectionVersion {
-		static constexpr Packet::Type TYPE = Packet::Type::SRC_SERVER_CONNECTION_VERSION;
-		char message[8]; // 1.80.02\0
-
-	};
-
-	struct ConnectionLogin {
-		static constexpr Packet::Type TYPE = Packet::Type::SRC_CLIENT_CONNECTION_LOGIN;
-		char username[16];
-		char password[16];
-	};
-
-	struct Chat32 {
-		static constexpr Packet::Type TYPE = Packet::Type::CHAT32;
-		char message[32];
+	struct Chat64 {
+		static constexpr Packet::Type TYPE = Packet::Type::CHAT64;
+		char message[64] = "\0";
 		UUID uuid;
 	};
 
-	struct Chat64 {
-		static constexpr Packet::Type TYPE = Packet::Type::CHAT64;
-		char message[64];
-		UUID uuid; // to or from
-	};
-
-	struct ServerTransform { //  (cheaper for server)
-		static constexpr Packet::Type TYPE = Packet::Type::SRC_SERVER_TRANSFORM;
+	struct S2CClientMotion {
+		static constexpr Packet::Type TYPE = Packet::Type::S2C_CLIENT_MOTION;
 		uint32_t seq;
-		UUID uuid; // for server
 		float x, y;
 		float vx, vy;
 		float ax, ay;
 		float angle;
 	};
 
-	struct ClientInput { //  (cheaper for server)
-		static constexpr Packet::Type TYPE = Packet::Type::SRC_CLIENT_INPUT;
+	struct S2CEntityMotion {
+		static constexpr Packet::Type TYPE = Packet::Type::S2C_ENTITY_MOTION;
+		UUID uuid;
+		float x, y;
+		float vx, vy;
+		float ax, ay;
+		float angle;
+	};
+
+	struct C2SClientInput {
+		static constexpr Packet::Type TYPE = Packet::Type::C2S_CLIENT_INPUT;
 		uint32_t seq;
-		Input input;
+		uint16_t input_mask;
 	};
 
-	//struct Input {
-	//	static constexpr Packet::Type TYPE = Packet::Type::SRC_CLIENT_INPUT;
-	//};
-
-	/*
-	* metadata should be somehow organized and have variable length
-	* but, how?
-	* stl structures with templates should be good enough to
-	* get size and data, depends
-	* packet structs arent variable sized because of simplicity of
-	* needing only 1 struct and no complicated, error prone across client and server
-	* 
-	* a rewritten manual packet system would allow for full control over packet lwngth,
-	* and for special exceptions, such as var lwngth metadata depending on a type.
-	* how to organize it?
-	* 
-	* packets that are 
-	*/
-	// tell the client of a new player (uuid, name)
-	//struct EntityNew {
-	//	static constexpr Packet::Type TYPE = Packet::Type::SRC_SERVER_ENTITY_NEW;
-	//	UUID uuid;
-	//	Entity::Type type;
-	//	char meta[128];
-	//	//char name[16] = "";
-	//};
-
-	struct PlayerNew {
-		static constexpr Packet::Type TYPE = Packet::Type::SRC_SERVER_PLAYER_NEW;
+	struct S2CPlayerNew {
+		static constexpr Packet::Type TYPE = Packet::Type::S2C_PLAYER_NEW;
 		UUID uuid;
-		char name[16] = "";
+		char name[16] = "\0";
 	};
 
-	struct EntityDelete {
-		static constexpr Packet::Type TYPE = Packet::Type::SRC_SERVER_ENTITY_DELETE;
+	struct S2CEntityDelete {
+		static constexpr Packet::Type TYPE = Packet::Type::S2C_ENTITY_DELETE;
 		UUID uuid;
 	};
 
-	// tell the client their identity
-	struct PlayerIdentity {
-		static constexpr Packet::Type TYPE = Packet::Type::SRC_SERVER_PLAYER_IDENTITY;
+	struct S2CClientIdentity {
+		static constexpr Packet::Type TYPE = Packet::Type::S2C_CLIENT_IDENTITY;
 		UUID uuid;
-		//char name[16] = "";
 	};
 
-	/*
-	* 
-	* Utility methods and types
-	* 
-	*/
+	/*******************************************************************\
+	*																	*
+	* 																	*
+	*					Utility methods and types						*
+	* 																	*
+	*																	*
+	\*******************************************************************/
 
 	enum class ErrorCode : uint16_t {
 		OK = 0,
@@ -208,19 +164,13 @@ struct Packet {
 	static constexpr size_t sizes[] = {
 		sizeof(Ping),
 		sizeof(Pong),
-		sizeof(ConnectionRefused),
-		sizeof(ConnectionVersion),
-		sizeof(ConnectionLogin),
-		sizeof(Chat32),
 		sizeof(Chat64),
-		sizeof(ServerTransform),
-		sizeof(ClientInput),
-		//sizeof(Input),
-		//sizeof(UnTrustedMotion),
-		sizeof(PlayerNew),
-		sizeof(EntityDelete),
-		//sizeof(RequestTeam),
-		sizeof(PlayerIdentity)
+		sizeof(S2CClientMotion),
+		sizeof(S2CEntityMotion),
+		sizeof(C2SClientInput),
+		sizeof(S2CPlayerNew),
+		sizeof(S2CEntityDelete),
+		sizeof(S2CClientIdentity)
 	};
 
 	/*

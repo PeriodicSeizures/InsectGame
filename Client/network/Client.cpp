@@ -15,7 +15,27 @@ Client::Client() {
 
 Client::~Client() {}
 
+
+
+static int tps = 0;
+static auto last = std::chrono::steady_clock::now();
+
+
+
+
 void Client::on_tick() {
+
+	// count ticks per second
+
+	auto now = std::chrono::steady_clock::now();
+	auto diff = std::chrono::duration_cast<std::chrono::microseconds>(now - last).count();
+	if (diff > 1000000) {
+		std::cout << "tps: " << tps << "/20\n";
+		tps = 0;
+		last = std::chrono::steady_clock::now();
+	}
+	tps++;
+
 	/*
 	* take input
 	*/
@@ -60,38 +80,35 @@ void Client::on_tick() {
 
 	const Uint8* keystate = SDL_GetKeyboardState(NULL);
 
-	uint8_t mask = 0;
+
+	static uint16_t last_input_mask = 0;
+	uint16_t input_mask = 0;
+
 	if (keystate[SDL_SCANCODE_W]) {
-		player->ay = -700;
+		input_mask |= Input::PRESS_UP;
 	}
 	else if (keystate[SDL_SCANCODE_S]) {
-		player->ay = 700;
-	}
-	else {
-		player->ay = 0;
+		input_mask |= Input::PRESS_DOWN;
 	}
 
 	if (keystate[SDL_SCANCODE_D]) {
-		player->ax = 700;
+		input_mask |= Input::PRESS_RIGHT;
 	}
 	else if (keystate[SDL_SCANCODE_A]) {
-		player->ax = -700;
-	}
-	else {
-		player->ax = 0;
+		input_mask |= Input::PRESS_LEFT;
 	}
 
-	//angle = 360 - ANGLES[mask] + 90;
+	/*
+	* Client-side prediction using input mask
+	*/
+	player->input_move(input_mask);
 
-	//auto new_angle = ANGLES[mask];
+	// send input across
+	if (input_mask != last_input_mask) {
 
-	// if acceleration changes, send it across
-	if (player->ax_prev != player->ax || 
-		player->ay_prev != player->ay) {
-
-		Packet::ClientInput packet = {
+		Packet::C2SClientInput packet = {
 			0,				// seq
-			Input::SHOOT	// fill in packet (REMOVE LATER
+			input_mask
 		};
 
 		send(std::move(packet));
@@ -99,8 +116,11 @@ void Client::on_tick() {
 
 	// do something per 1/20 seconds
 	for (auto&& entity : uuid_entity_map) {
+		//static_cast<ClientImpl*>(entity.second->impl)->
 		entity.second->on_tick();
 	}
+
+	last_input_mask = input_mask;
 
 	player->on_tick();
 }
@@ -127,6 +147,11 @@ void Client::on_render() {
 			player->vy, 
 			player->ax, 
 			player->ay);
+
+	// position hud
+	Engine::drawString(std::to_string(player->x) + " " + std::to_string(player->y),
+		5, 5, Engine::WHITE, 1, false);
+
 	// blit
 	Engine::doRender();
 }
@@ -139,10 +164,31 @@ void Client::auth_listener(Packet packet) {
 void Client::game_listener(Packet packet) {
 	// what to do when a packet is received
 	switch (packet.type) {
-	case Packet::Type::SRC_SERVER_TRANSFORM: {
-		auto t = Packet::deserialize<Packet::ServerTransform>(packet);
+	case Packet::Type::S2C_CLIENT_MOTION: {
+
+		// test
+		auto t = Packet::deserialize<Packet::S2CClientMotion>(packet);
+
+		/*
+		* If player sequence is greater then
+		* packet sequence,
+		* then 
+		*/
+		//if (player->input_seq < t->seq) {
+		//
+		//}
+
+		/*
+		* For basic client side prediction, implement:
+		*/
+		player->set_transform(t->x, t->y, t->vx, t->vy, t->ax, t->ay, t->angle);
+
+		break;
+	}
+	case Packet::Type::S2C_ENTITY_MOTION: {
+		auto t = Packet::deserialize<Packet::S2CEntityMotion>(packet);
 		auto&& find = uuid_entity_map.find(t->uuid);
-		std::cout << t->uuid << " transform \n";
+		LOG_DEBUG("%llu transform\n", t->uuid);
 		if (find != uuid_entity_map.end()) {
 
 			/*
@@ -152,26 +198,29 @@ void Client::game_listener(Packet packet) {
 		}
 		break;
 	}
-	case Packet::Type::SRC_SERVER_PLAYER_NEW: {
-		auto t = Packet::deserialize<Packet::PlayerNew>(packet);
+	case Packet::Type::S2C_PLAYER_NEW: {
+		auto t = Packet::deserialize<Packet::S2CPlayerNew>(packet);
 		// add to map
-		std::cout << t->uuid << " new player\n";
+		LOG_DEBUG("%llu new player\n", t->uuid);
 		uuid_entity_map.insert({ t->uuid,
 			std::make_shared<EntityPlayer>(t->uuid, t->name, new ClientImpl()) });
 		break;
 	}
-	case Packet::Type::SRC_SERVER_ENTITY_DELETE: {
-		auto t = Packet::deserialize<Packet::EntityDelete>(packet);
+	case Packet::Type::S2C_ENTITY_DELETE: {
+		auto t = Packet::deserialize<Packet::S2CEntityDelete>(packet);
+
+		LOG_DEBUG("%llu delete player\n", t->uuid);
 
 		// delete from entities
 		uuid_entity_map.erase(t->uuid);
 
 		break;
 	}
-	case Packet::Type::SRC_SERVER_PLAYER_IDENTITY: {
-		auto t = Packet::deserialize<Packet::PlayerIdentity>(packet);
+	case Packet::Type::S2C_CLIENT_IDENTITY: {
+		auto t = Packet::deserialize<Packet::S2CClientIdentity>(packet);
 
 		std::cout << t->uuid << " id\n";
+		LOG_DEBUG("%llu identity\n", t->uuid);
 
 		this->player->uuid = t->uuid;
 
