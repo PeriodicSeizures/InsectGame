@@ -13,7 +13,6 @@ int main(void)
 
 	// temp connection test
 	//CLIENT->connect("192.168.1.104", "13");
-	CLIENT->connect("97.102.248.253", "13");
 
 	CLIENT->start();	
 
