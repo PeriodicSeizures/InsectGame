@@ -36,22 +36,28 @@ Packet EntityPlayer::packet_new() {
 
 void EntityPlayer::input_move(uint16_t m) {
 	if ((m & Input::PRESS_UP) == Input::PRESS_UP) {
+		//fy = -20;
 		ay = -700;
 	}
 	else if ((m & Input::PRESS_DOWN) == Input::PRESS_DOWN) {
+		//fy = 20;
 		ay = 700;
 	}
 	else {
+		//fy = 0;
 		ay = 0;
 	}
 
 	if ((m & Input::PRESS_LEFT) == Input::PRESS_LEFT) {
+		//fx = -20;
 		ax = -700;
 	}
 	else if ((m & Input::PRESS_RIGHT) == Input::PRESS_RIGHT) {
+		//fx = 20;
 		ax = 700;
 	}
 	else {
+		//fx = 0;
 		ax = 0;
 	}
 }

@@ -68,7 +68,7 @@ struct Packet {
 
 	struct S2CClientMotion {
 		static constexpr Packet::Type TYPE = Packet::Type::S2C_CLIENT_MOTION;
-		uint32_t seq;
+		uint32_t last_processed_input;
 		float x, y;
 		float vx, vy;
 		float ax, ay;
@@ -86,7 +86,7 @@ struct Packet {
 
 	struct C2SClientInput {
 		static constexpr Packet::Type TYPE = Packet::Type::C2S_CLIENT_INPUT;
-		uint32_t seq;
+		uint32_t last_processed_input;
 		uint16_t input_mask;
 	};
 

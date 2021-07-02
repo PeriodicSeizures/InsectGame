@@ -28,11 +28,18 @@ public:
 		ax = 0, ay = 0,
 		angle = 0;
 
+	// push / move forces (controller)
+	//float fx = 0, fy = 0;
+
 	float x_prev = 0, y_prev = 0,
 		ax_prev = 0, ay_prev = 0;
 
+	// 1 kg
+	//static constexpr float mass = 1;
+
+	//static constexpr float force_g = 9.81f;
 	static constexpr float max_speed = 150.f;
-	static constexpr float fric = 12.f;
+	static constexpr float fric = 50.f; // 12.f;
 	static constexpr bool is_kinematic = true;
 
 	EntityImpl* impl;

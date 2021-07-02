@@ -86,9 +86,13 @@ void Client::on_tick(float delta) {
 
 	if (keystate[SDL_SCANCODE_W]) {
 		input_mask |= Input::PRESS_UP;
+		// set to now
 	}
 	else if (keystate[SDL_SCANCODE_S]) {
 		input_mask |= Input::PRESS_DOWN;
+	}
+	else {
+		start_v = std::chrono::steady_clock::now();
 	}
 
 	if (keystate[SDL_SCANCODE_D]) {
@@ -97,17 +101,48 @@ void Client::on_tick(float delta) {
 	else if (keystate[SDL_SCANCODE_A]) {
 		input_mask |= Input::PRESS_LEFT;
 	}
+	else {
+		start_h = std::chrono::steady_clock::now();
+	}
 
 	/*
 	* Client-side prediction using input mask
 	*/
-	player->input_move(input_mask);
+
+	pending_inputs.push_back({ input_mask, input_sequence_number++ });
 
 	// send input across
 	if (input_mask != last_input_mask) {
+		player->input_move(input_mask);
+
+		// set begin time for a certain input to now, 
+		// timings for inputs will change at this scope
+		if ((input_mask & Input::PRESS_UP) == Input::PRESS_UP ||
+			(input_mask & Input::PRESS_DOWN) == Input::PRESS_DOWN) 
+		{
+			// set change to now
+			auto h_diff = 
+				std::chrono::duration_cast<std::chrono::microseconds>(
+					now - start_h).count();
+
+			/*
+			* 
+			*/
+
+			last_h = now;
+		}
+
+		if ((input_mask & Input::PRESS_LEFT) == Input::PRESS_LEFT ||
+			(input_mask & Input::PRESS_RIGHT) == Input::PRESS_RIGHT)
+		{
+
+		}
+
+		// append input to sequences
+		//pending_inputs.push_back({input_mask, input_sequence_number++});
 
 		Packet::C2SClientInput packet = {
-			0,				// seq
+			input_sequence_number,	// seq
 			input_mask
 		};
 
@@ -170,6 +205,33 @@ void Client::game_listener(Packet packet) {
 		auto t = Packet::deserialize<Packet::S2CClientMotion>(packet);
 
 		/*
+		* Apply the server given transformation, always
+		*/
+		player->set_transform(t->x, t->y, t->vx, t->vy, t->ax, t->ay, t->angle);
+
+		/*
+		* Apply server reconciliation
+		*	- is basically clientside 'faked' motion for rendering correctly
+		*/
+		int j = 0;
+		while (j < pending_inputs.size()) {
+			auto input = pending_inputs[j];
+			if (input.input_sequence_number <= t->last_processed_input) {
+				pending_inputs.erase(pending_inputs.begin() + j);
+			}
+			else {
+				// a visual correction must be applied
+				std::cout << "reconciliating input\n";
+
+				/*
+				* Apply the next unprocessed input over a tick 
+				* for custom delta time
+				*/
+				j++;
+			}
+		}
+
+		/*
 		* If player sequence is greater then
 		* packet sequence,
 		* then 
@@ -181,7 +243,7 @@ void Client::game_listener(Packet packet) {
 		/*
 		* For basic client side prediction, implement:
 		*/
-		player->set_transform(t->x, t->y, t->vx, t->vy, t->ax, t->ay, t->angle);
+		//player->set_transform(t->x, t->y, t->vx, t->vy, t->ax, t->ay, t->angle);
 
 		break;
 	}

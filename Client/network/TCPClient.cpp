@@ -52,10 +52,11 @@ void TCPClient::start() {
 		const auto now = std::chrono::steady_clock::now();
 
 		/*
-		* Tick every 50ms, strictly
+		* Tick every 16.6ms, strictly
 		*/
 		auto ticks_elapsed = std::chrono::duration_cast<std::chrono::microseconds>(now - last_tick).count();
-		if (ticks_elapsed >= 50000) {
+		
+		if (ticks_elapsed >= 16666) { // 50000
 			// tick
 			// input the seconds elapsed since the last tick for delta
 			on_tick(((float)ticks_elapsed) / 1000000.f);

@@ -12,13 +12,43 @@ IEntity::~IEntity() {
 	std::cout << "~IEntity()\n";
 }
 
+inline float sign(float f) {
+	return f > 0.f ? 1.f : f < 0.f ? -1.f : 0.f;
+}
+
 void IEntity::on_physics(float delta) {
 	x_prev = x;
 	y_prev = y;
 	ax_prev = ax;
 	ay_prev = ay;
 
-	vx += ax * delta; // increment the velocity in tick
+	/*
+	* calculate forces
+	*/
+
+	//// constant normal force
+	//static constexpr float force_n = force_g * mass;
+	//
+	//// constant frictional force
+	//static constexpr float force_f = fric * force_n;
+	//
+	//// final force
+	////float force_x = (fx) - sign(fx)*force_f;
+	////float force_y = (fy) - sign(fy)*force_f;
+	//
+	//// mass * a = force_f
+	//ax = (fx - sign(fx) * force_f) / mass;
+	//ay = (fy - sign(fy) * force_f) / mass;
+	//
+	////ax = (force_x + force_f) / mass;
+	////ay = (force_y + force_f) / mass;
+
+	/*
+	* calculate velocities
+	*/
+
+	// increment the velocity in tick
+	vx += ax * delta;
 	vy += ay * delta;
 
 	// terminal velocity
@@ -32,20 +62,36 @@ void IEntity::on_physics(float delta) {
 	else if (vy < -max_speed)
 		vy = -max_speed;
 
-	// friction falloff
-	// if the player is being moved by player
+	/*
+	* friction is actually an acceleration in the opposite direction
+	* due to the normal force and gravity and fric coeff
+	* touch
+	*	- a correct implementation:
+	*	- apply a negative acceleration, equal to 
+	*/
+
+	// friction when no work is being applied is
+	// a negative acceleration (opposite to vel)
+	//ax *= -fric;
+
+
+
 	if (abs(ax) < std::numeric_limits<float>::epsilon()) {
+		//if (vx < 0) vx *= fric / delta;
+		//else vx *= -fric / delta;
 		if (vx < 0) vx += fric*delta;
 		else vx += -fric*delta;
-
+	
 		if (abs(vx) <= fric) // fric elipson
 			vx = 0;
 	}
-
+	
 	if (abs(ay) < std::numeric_limits<float>::epsilon()) {
+		//if (vy < 0) vy *= fric / delta;
+		//else vy *= -fric / delta;
 		if (vy < 0) vy += fric*delta;
 		else vy += -fric*delta;
-
+	
 		if (abs(vy) <= fric) // fric elipson
 			vy = 0;
 	}

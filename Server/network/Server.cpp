@@ -114,10 +114,11 @@ void Server::on_packet(TCPConnection::ptr owner, Packet packet) {
 		p->input_move(t->input_mask);
 		//p->on_physics();
 
-		send_all(Packet::S2CClientMotion{
-			t->seq,
+		send_to(Packet::S2CClientMotion{
+			t->last_processed_input,
 			p->x, p->y, 
-			p->vx, p->vy, p->ax, p->ay, p->angle });
+			p->vx, p->vy, p->ax, p->ay, p->angle },
+			owner);
 
 		// send sequenced motion back to client
 		//send_to(Packet::S2CClientMotion{
