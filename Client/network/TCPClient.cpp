@@ -154,6 +154,10 @@ void TCPClient::set_render(bool a) {
 		do_render = a;
 }
 
+uint16_t TCPClient::latency() {
+	return connection->latency();
+}
+
 void TCPClient::register_listener(std::function<void(Packet)> f) {
 	listener = f;
 }

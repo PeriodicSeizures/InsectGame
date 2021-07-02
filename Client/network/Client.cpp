@@ -30,7 +30,7 @@ void Client::on_tick(float delta) {
 	auto now = std::chrono::steady_clock::now();
 	auto diff = std::chrono::duration_cast<std::chrono::microseconds>(now - last).count();
 	if (diff > 1000000) {
-		std::cout << "tps: " << tps << "/20, " << delta << "s\n";
+		std::cout << "delta: " << delta << "s, " << "latency: " << latency() << "ms\n";
 		tps = 0;
 		last = std::chrono::steady_clock::now();
 	}

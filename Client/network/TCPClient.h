@@ -70,6 +70,9 @@ public:
 		//(c.*f)(std::placeholders::_1);
 	}
 
+	// returns latency in ms
+	uint16_t latency();
+
 	//template<typename T>
 	//T listener_callback;
 
