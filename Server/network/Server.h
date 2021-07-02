@@ -28,7 +28,7 @@ private:
 	/*
 	* Overridden methods
 	*/
-	void on_tick() override;
+	void on_tick(float delta) override;
 
 	/*
 	* events

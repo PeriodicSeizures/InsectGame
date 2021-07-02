@@ -23,14 +23,14 @@ static auto last = std::chrono::steady_clock::now();
 
 
 
-void Client::on_tick() {
+void Client::on_tick(float delta) {
 
 	// count ticks per second
 
 	auto now = std::chrono::steady_clock::now();
 	auto diff = std::chrono::duration_cast<std::chrono::microseconds>(now - last).count();
 	if (diff > 1000000) {
-		std::cout << "tps: " << tps << "/20\n";
+		std::cout << "tps: " << tps << "/20, " << delta << "s\n";
 		tps = 0;
 		last = std::chrono::steady_clock::now();
 	}
@@ -117,12 +117,12 @@ void Client::on_tick() {
 	// do something per 1/20 seconds
 	for (auto&& entity : uuid_entity_map) {
 		//static_cast<ClientImpl*>(entity.second->impl)->
-		entity.second->on_tick();
+		entity.second->on_tick(delta);
 	}
 
 	last_input_mask = input_mask;
 
-	player->on_tick();
+	player->on_tick(delta);
 }
 
 void Client::on_render() {

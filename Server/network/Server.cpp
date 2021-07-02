@@ -32,9 +32,11 @@ UUID Server::generateUUID() {
 static int tps = 0;
 static auto last = std::chrono::steady_clock::now();
 
-void Server::on_tick() {
+void Server::on_tick(float delta) {
 	/*
 	* Just dont do anything yet
+	* 
+	*	- physics should be done on an update loop given delta time
 	*/
 
 	// count ticks per second
@@ -51,7 +53,7 @@ void Server::on_tick() {
 
 
 	for (auto&& entity : uuid_entity_map) {
-		static_cast<ServerImpl*>(entity.second->impl)->behaviour(entity.second);
+		static_cast<ServerImpl*>(entity.second->impl)->behaviour(entity.second, delta);
 	}
 }
 

@@ -16,9 +16,7 @@ namespace Entity {
 };
 
 class IEntity : public std::enable_shared_from_this<IEntity>
-{private:
-	bool force_moved = false;
-
+{
 public:
 	// ptr
 	typedef std::shared_ptr<IEntity> ptr;
@@ -44,9 +42,9 @@ public:
 	virtual ~IEntity();
 
 public:
-	virtual void on_physics();
+	virtual void on_physics(float delta);
 
-	virtual void on_tick() = 0;
+	virtual void on_tick(float delta) = 0;
 
 	//void send_transform(TCPConnection::ptr conn); // send location
 	//virtual void send_new(TCPConnection::ptr conn) = 0; // send existence
@@ -87,7 +85,7 @@ public:
 	EntityPlayer(UUID uuid, std::string name, EntityImpl* impl);
 
 public:
-	void on_tick() override;
+	void on_tick(float delta) override;
 
 	Packet packet_transform() override;
 

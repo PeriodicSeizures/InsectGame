@@ -94,7 +94,7 @@ private:
 	* Server logic methods
 	*/
 	void on_update();
-	virtual void on_tick() = 0;
+	virtual void on_tick(float delta) = 0;
 
 	void do_accept();
 

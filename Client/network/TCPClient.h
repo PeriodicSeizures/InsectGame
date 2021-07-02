@@ -11,18 +11,18 @@ private:
 	asio::ssl::context _ssl_context;
 	
 	std::thread ctx_thread;
-	std::thread alive_ticker_thread;
+	//std::thread alive_ticker_thread;
 
 	AsyncQueue<Packet> in_packets;
 
 	std::shared_ptr<TCPConnection> connection;
 
-	std::atomic_bool alive = false;
+	std::atomic_bool alive;
 
 	// for rendering
-	std::atomic_bool do_render = true;
-	std::condition_variable cv;
-	std::mutex mux;
+	std::atomic_bool do_render;
+	//std::condition_variable cv;
+	//std::mutex mux;
 
 	// callback listener
 	//void (*listener)(Packet);
@@ -65,8 +65,6 @@ public:
 	*/
 	void set_render(bool a);
 
-	void dummy(Packet);
-
 	template<typename C>
 	void register_listener(void (C::*f)(Packet), C &c) {
 		//(c.*f)(std::placeholders::_1);
@@ -79,7 +77,9 @@ public:
 	void register_listener(std::function<void(Packet)>);
 
 private:
-	virtual void on_tick() = 0;
+	// include delta for upmost accuracy, since tick speed cannot be entirely trusted
+	// and depended upon, since lagg exists
+	virtual void on_tick(float delta) = 0;
 	virtual void on_render() = 0;
 
 	//virtual void on_packet(Packet) = 0;

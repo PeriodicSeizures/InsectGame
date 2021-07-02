@@ -3,9 +3,9 @@
 
 ServerImpl::ServerImpl() {}
 
-void ServerImpl::behaviour(IEntity::ptr entity) {
+void ServerImpl::behaviour(IEntity::ptr entity, float delta) {
 
-	entity->on_tick();
+	entity->on_tick(delta);
 	//entity->p
 
 	return;

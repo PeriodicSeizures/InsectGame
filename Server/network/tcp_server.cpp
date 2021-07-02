@@ -41,8 +41,15 @@ void TCPServer::start() {
 		}
 	});
 
+	auto last_tick = std::chrono::steady_clock::now();
 	while (alive) {
-		on_tick();
+
+		const auto now = std::chrono::steady_clock::now();
+
+		auto ticks_elapsed = std::chrono::duration_cast<std::chrono::microseconds>(now - last_tick).count();
+
+		on_tick(((float)ticks_elapsed) / 1000000.f);
+		last_tick = std::chrono::steady_clock::now();
 		//std::this_thread::sleep_for(std::chrono::milliseconds(50));
 		precise_sleep(0.05);
 	}

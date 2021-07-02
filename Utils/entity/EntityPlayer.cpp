@@ -7,9 +7,9 @@ EntityPlayer::EntityPlayer(UUID uuid, std::string name, EntityImpl* impl)
 
 }
 
-void EntityPlayer::on_tick() {
+void EntityPlayer::on_tick(float delta) {
 	
-	IEntity::on_tick();
+	IEntity::on_tick(delta);
 
 }
 

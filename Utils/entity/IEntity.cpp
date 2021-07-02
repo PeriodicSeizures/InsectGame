@@ -12,14 +12,14 @@ IEntity::~IEntity() {
 	std::cout << "~IEntity()\n";
 }
 
-void IEntity::on_physics() {
+void IEntity::on_physics(float delta) {
 	x_prev = x;
 	y_prev = y;
 	ax_prev = ax;
 	ay_prev = ay;
 
-	vx += ax * 0.05f; // increment the velocity in tick
-	vy += ay * 0.05f;
+	vx += ax * delta; // increment the velocity in tick
+	vy += ay * delta;
 
 	// terminal velocity
 	if (vx > max_speed)
@@ -35,16 +35,16 @@ void IEntity::on_physics() {
 	// friction falloff
 	// if the player is being moved by player
 	if (abs(ax) < std::numeric_limits<float>::epsilon()) {
-		if (vx < 0) vx += fric;
-		else vx += -fric;
+		if (vx < 0) vx += fric*delta;
+		else vx += -fric*delta;
 
 		if (abs(vx) <= fric) // fric elipson
 			vx = 0;
 	}
 
 	if (abs(ay) < std::numeric_limits<float>::epsilon()) {
-		if (vy < 0) vy += fric;
-		else vy += -fric;
+		if (vy < 0) vy += fric*delta;
+		else vy += -fric*delta;
 
 		if (abs(vy) <= fric) // fric elipson
 			vy = 0;
@@ -52,10 +52,8 @@ void IEntity::on_physics() {
 
 
 
-	x += vx * 0.05f; // increment the position in tick
-	y += vy * 0.05f;
-
-	force_moved = false;
+	x += vx * delta; // increment the position in tick
+	y += vy * delta;
 
 	// velocity and position are predictable
 	// but accelerations can happen at any moment
@@ -67,9 +65,9 @@ void IEntity::on_physics() {
 	
 }
 
-void IEntity::on_tick() {
+void IEntity::on_tick(float delta) {
 	// do physics
-	on_physics();
+	on_physics(delta);
 
 	// velocity and position are predictable
 	// but accelerations can happen at any moment
@@ -96,8 +94,6 @@ void IEntity::set_transform(float x, float y,
 	this->ax = ax;
 	this->ay = ay;
 	this->angle = angle;
-
-	force_moved = true;
 }
 
 Packet IEntity::packet_transform() {

@@ -13,6 +13,9 @@ TCPClient::TCPClient()
 	_ssl_context.set_verify_mode(asio::ssl::verify_none);
 
 	TCPConnection::init(nullptr, &in_packets);
+
+	alive = false;
+	do_render = true;
 }
 
 TCPClient::~TCPClient() {
@@ -29,22 +32,22 @@ void TCPClient::start() {
 		_io_context.run();
 	});
 
-	alive_ticker_thread = std::thread([this]() {
-		while (alive) {
-			cv.notify_one();
-			// 50ms = 20tps
-			// 16.6 ms = 60tps
-			precise_sleep(1.0 / 60.0);
-			//std::this_thread::sleep_for(std::chrono::microseconds(1666));
-		}
-	});
+	//alive_ticker_thread = std::thread([this]() {
+	//	while (alive) {
+	//		cv.notify_one();
+	//		// 50ms = 20tps
+	//		// 16.6 ms = 60tps
+	//		precise_sleep(1.0 / 60.0);
+	//		//std::this_thread::sleep_for(std::chrono::microseconds(1666));
+	//	}
+	//});
 
 	auto last_tick = std::chrono::steady_clock::now();
 	auto last_render = std::chrono::steady_clock::now();
 
 	while (alive) {
-		std::unique_lock<std::mutex> ul(mux);
-		cv.wait(ul);
+		//std::unique_lock<std::mutex> ul(mux);
+		//cv.wait(ul);
 
 		const auto now = std::chrono::steady_clock::now();
 
@@ -54,7 +57,8 @@ void TCPClient::start() {
 		auto ticks_elapsed = std::chrono::duration_cast<std::chrono::microseconds>(now - last_tick).count();
 		if (ticks_elapsed >= 50000) {
 			// tick
-			on_tick();
+			// input the seconds elapsed since the last tick for delta
+			on_tick(((float)ticks_elapsed) / 1000000.f);
 
 			/*
 			* Always attempt to process packets every tick
@@ -89,6 +93,12 @@ void TCPClient::start() {
 			last_render = std::chrono::steady_clock::now();
 		}
 
+		/*
+		* sleep time can be increased or decreased,
+		* at the cost of tick and rendering accuracy and optimal speed
+		* ticker will be most unaffected, due to deltaT
+		*/
+		precise_sleep(1.0 / 60.0);
 
 	}
 
@@ -105,14 +115,14 @@ void TCPClient::stop() {
 	if (ctx_thread.joinable())
 		ctx_thread.join();
 
-	cv.notify_one();
-
-	if (alive_ticker_thread.joinable()) {
-		/*
-		* if rendering is disabled, resume the cv blocking to stop block
-		*/
-		alive_ticker_thread.join();
-	}
+	//cv.notify_one();
+	//
+	//if (alive_ticker_thread.joinable()) {
+	//	/*
+	//	* if rendering is disabled, resume the cv blocking to stop block
+	//	*/
+	//	alive_ticker_thread.join();
+	//}
 
 	_io_context.restart();
 }
